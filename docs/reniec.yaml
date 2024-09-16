@@ -1,0 +1,42 @@
+tags:
+  - name: "Clientes"
+    description: "Operaciones relacionadas con clientes"
+  - name: "Aplicaciones"
+    description: "Operaciones relacionadas con aplicaciones"
+paths:
+  /api/teatro/client/search-reniec:
+    post:
+      tags:
+        - "Clientes"
+      summary: Busca información en RENIEC utilizando el DNI
+      description: Retorna información del ciudadano registrado en RENIEC según el DNI proporcionado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dni:
+                  type: string
+                  description: DNI del ciudadano a buscar
+                  example: "12345678"
+      responses:
+        200:
+          description: Datos obtenidos exitosamente de RENIEC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nombres:
+                    type: string
+                    example: "JUAN PEREZ"
+                  apellidoPaterno:
+                    type: string
+                    example: "PEREZ"
+                  apellidoMaterno:
+                    type: string
+                    example: "GARCIA"
+        500:
+          description: Error al obtener datos de RENIEC

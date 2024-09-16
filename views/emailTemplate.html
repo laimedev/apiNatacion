@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+          <html>
+<head>
+  <title>SURCO DEPORTES</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #000;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .card {
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin: 20px auto;
+      text-align: center;
+    }
+
+    .header, .footer {
+      background: linear-gradient(to right, #E2F4FC, #C2E7F8);
+      color: #036476;
+      padding: 15px;
+      border-radius: 8px 8px 0 0;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .footer {
+      border-radius: 0 0 8px 8px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 0;
+    }
+
+    p {
+      font-size: 16px;
+      margin: 10px 0;
+    }
+
+    a {
+      color: #0044cc;
+      text-decoration: none;
+    }
+
+    img {
+      max-width: 150px;
+      height: auto;
+      margin-top: 10px;
+    }
+
+    .activation-button {
+      background: linear-gradient(to right, #009EE4, #009EE4);
+      color: #fff!important;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      height: 150px;
+    }
+
+    .form-group button {
+      background: linear-gradient(to right, #009EE4, #009EE4);
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        FORMULARIO DE CONTACTO RECIBIDO
+      </div>
+      <p style="padding-top: 7px;">Hola ${formData.nombre} ${formData.apellido},</p>
+      <p>Somos ${process.env.COMPANY}. <br> Tu contacto fue enviado a nuestros equipo, nos contactaremos a la brevedad posible.</p>
+      
+      <!-- Formulario de contacto -->
+      <div style="text-align: center; margin: 20px;">
+        <form action="#" method="post">
+          <div class="form-group">
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" name="nombre" value="${formData.nombre}" readonly>
+          </div>
+          <div class="form-group">
+            <label for="apellido">Apellido:</label>
+            <input type="text" id="apellido" name="apellido" value="${formData.apellido}" readonly>
+          </div>
+          <div class="form-group">
+            <label for="email">Correo electronico:</label>
+            <input type="email" id="email" name="email" value="${formData.email}" readonly>
+          </div>
+          <div class="form-group">
+            <label for="telefono">Teléfono:</label>
+            <input type="tel" id="telefono" name="telefono" value="${formData.telefono}" readonly>
+          </div>
+          <div class="form-group">
+            <label for="consulta">Consulta:</label>
+            <textarea id="consulta" name="consulta" readonly>${formData.consulta}</textarea>
+          </div>
+        </form>
+      </div>
+      
+      <p style="font-size: 10px; color: #62667F; padding: 7px;">Muchas gracias por contactar con nosotros.</p>
+      <div class="footer">
+        <img src="${process.env.LOGO}" alt="Logo de la Empresa">
+      </div>
+    </div>
+  </div>
+</body>
+</html>
