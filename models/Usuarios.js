@@ -1,24 +1,26 @@
 const dbConnection = require('../core/db_config');
 const bcrypt = require('bcrypt');
 
-const Clientes = {
+const Usuarios = {
+  // Crear un nuevo usuario
   create: async (formData) => {
     try {
-      const connection = await dbConnection(); // Obtener la conexión
-      const query = 'INSERT INTO Alumnos SET ?'; // Consulta SQL para insertar el registro
-      const [result] = await connection.query(query, formData); // Ejecutar la consulta
-      connection.release(); // Liberar la conexión a la base de datos
-      return result.insertId; // Retornar el ID del nuevo registro
+      const connection = await dbConnection();
+      const query = 'INSERT INTO Usuarios SET ?';
+      const [result] = await connection.query(query, formData);
+      connection.release();
+      return result.insertId;
     } catch (error) {
-      console.error('Error al crear alumno en la base de datos:', error);
-      throw new Error('Error al crear alumno');
+      console.error('Error al crear usuario:', error);
+      throw new Error('Error al crear usuario');
     }
   },
 
+  // Obtener un usuario por condiciones
   findOne: async (conditions) => {
     try {
       const connection = await dbConnection();
-      const query = 'SELECT * FROM Clientes WHERE ?';
+      const query = 'SELECT * FROM Usuarios WHERE ?';
       const [results] = await connection.query(query, conditions);
       connection.release();
       return results.length > 0 ? results[0] : null;
@@ -27,11 +29,12 @@ const Clientes = {
     }
   },
 
-  updateUser: async (codCliente, updatedData) => {
+  // Actualizar un usuario
+  updateUser: async (codUsuario, updatedData) => {
     try {
       const connection = await dbConnection();
-      const query = 'UPDATE Clientes SET ? WHERE codCliente = ?';
-      const result = await connection.query(query, [updatedData, codCliente]);
+      const query = 'UPDATE Usuarios SET ? WHERE codUsuario = ?';
+      const result = await connection.query(query, [updatedData, codUsuario]);
       connection.release();
       return result.affectedRows;
     } catch (error) {
@@ -39,11 +42,12 @@ const Clientes = {
     }
   },
 
-  changeStatus: async (codCliente, updatedUserData) => {
+  // Cambiar el estado de un usuario
+  changeStatus: async (codUsuario, updatedUserData) => {
     try {
       const connection = await dbConnection();
-      const query = 'UPDATE Clientes SET ? WHERE codCliente = ?';
-      const result = await connection.query(query, [updatedUserData, codCliente]);
+      const query = 'UPDATE Usuarios SET ? WHERE codUsuario = ?';
+      const result = await connection.query(query, [updatedUserData, codUsuario]);
       connection.release();
       return result.affectedRows;
     } catch (error) {
@@ -51,36 +55,24 @@ const Clientes = {
     }
   },
 
-
-  deleteById: async (codCliente) => {
+  // Eliminar un usuario por ID
+  deleteById: async (codUsuario) => {
     try {
       const connection = await dbConnection();
-      const query = 'DELETE FROM Clientes WHERE codCliente = ?';
-      await connection.query(query, [codCliente]);
+      const query = 'DELETE FROM Usuarios WHERE codUsuario = ?';
+      await connection.query(query, [codUsuario]);
       connection.release();
     } catch (error) {
       throw new Error(error);
     }
   },
 
-  getAllClients: async () => {
-    try {
-      const connection = await dbConnection();
-      const query = 'SELECT * FROM Clientes';
-      const [rows] = await connection.query(query);
-      connection.release();
-      return rows;
-    } catch (error) {
-      throw new Error(error);
-    }
-  },
-
-
+  // Exportar usuarios a Excel
   exportData: async () => {
     try {
       const connection = await dbConnection();
-      const query = `SELECT codCliente, nombres, primer_apellido, segundo_apellido, genero, tipoDocumento, numDocumento, direccion, telefono, email, estado, creacion
-                     FROM Clientes`;
+      const query = `SELECT codUsuario, nombres, primer_apellido, segundo_apellido, tipo, numDocumento, telefono, email, estado, creacion
+                     FROM Usuarios`;
       const [rows] = await connection.query(query);
       connection.release();
       return rows;
@@ -89,12 +81,12 @@ const Clientes = {
     }
   },
 
-
-  findById: async (codCliente) => {
+  // Obtener un usuario por ID
+  findById: async (codUsuario) => {
     try {
       const connection = await dbConnection();
-      const query = 'SELECT * FROM Clientes WHERE codCliente = ?';
-      const [rows] = await connection.query(query, [codCliente]);
+      const query = 'SELECT * FROM Usuarios WHERE codUsuario = ?';
+      const [rows] = await connection.query(query, [codUsuario]);
       connection.release();
       return rows.length > 0 ? rows[0] : null;
     } catch (error) {
@@ -102,29 +94,13 @@ const Clientes = {
     }
   },
 
-
-  update: async (codCliente, formData) => {
-    try {
-      const connection = await dbConnection();
-      const query = 'UPDATE Clientes SET ? WHERE codCliente = ?';
-      const result = await connection.query(query, [formData, codCliente]);
-      connection.release();
-      return result.affectedRows;
-    } catch (error) {
-      throw new Error(error);
-    }
-  },
-
-
-
-
-  getClients: async (page = 1, limit = 10, search = '', status = '', startDate = '', endDate = '') => {
+  // Listar usuarios con filtros
+  getUsers: async (page = 1, limit = 10, search = '', status = '', startDate = '', endDate = '') => {
     try {
       const connection = await dbConnection();
       const offset = (page - 1) * limit;
-      let query = 'SELECT * FROM Clientes WHERE 1=1';
+      let query = 'SELECT * FROM Usuarios WHERE 1=1';
 
-      // Filtro de búsqueda por nombre, apellido, email, etc.
       if (search) {
         query += ` AND (
           nombres LIKE '%${search}%' OR
@@ -135,26 +111,20 @@ const Clientes = {
         )`;
       }
 
-      // Filtro por estado
       if (status) {
         query += ` AND estado = '${status}'`;
       }
 
-      // Filtro por rango de fechas
       if (startDate && endDate) {
         query += ` AND creacion BETWEEN '${startDate}' AND '${endDate}'`;
       }
 
-      // Ordenar por fecha de creación descendente
       query += ' ORDER BY creacion DESC';
-
-      // Paginación
       query += ` LIMIT ${limit} OFFSET ${offset}`;
 
       const [rows] = await connection.query(query);
-      const totalCountQuery = 'SELECT COUNT(*) AS total FROM Clientes WHERE 1=1';
+      const totalCountQuery = 'SELECT COUNT(*) AS total FROM Usuarios WHERE 1=1';
 
-      // Agregar filtros al conteo total
       let totalCount = totalCountQuery;
       if (search) {
         totalCount += ` AND (
@@ -176,10 +146,11 @@ const Clientes = {
       const total = totalCountRows[0].total;
 
       connection.release();
-      return { clients: rows, total };
+      return { users: rows, total };
     } catch (error) {
       throw new Error(error);
     }
   }
 };
-module.exports = Clientes;
+
+module.exports = Usuarios;

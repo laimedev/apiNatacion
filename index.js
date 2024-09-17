@@ -17,6 +17,11 @@ const SolicitudTea = require("./routes/teatro/solicitudTeaRouter")
 
 
 const Contacto = require("./routes/contactos")
+const Clientes = require("./routes/cliente")
+const Alumnos = require("./routes/alumnos")
+const Talleres = require("./routes/talleres")
+const Horarios = require("./routes/horarios")
+const Usuarios = require("./routes/usuarios")
 
 
 const ipn = require("./routes/ipn")
@@ -66,6 +71,11 @@ app.use("/api/teatro/application", SolicitudTea);
 
 
 app.use("/api/contacto", Contacto);
+app.use("/api/cliente", Clientes);
+app.use("/api/alumno", Alumnos);
+app.use("/api/taller", Talleres);
+app.use("/api/horario", Horarios);
+app.use("/api/usuario", Usuarios);
 
 
 

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Activación de cuenta</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #000;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .card {
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin: 20px auto;
+      text-align: center;
+    }
+
+    .header, .footer {
+      background: linear-gradient(to right, #E2F4FC, #C2E7F8);
+      color: #036476;
+      padding: 15px;
+      border-radius: 8px 8px 0 0;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .footer {
+      border-radius: 0 0 8px 8px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .code-card {
+      background-color: #f9f9f9;
+      border: 2px dashed #0044cc;
+      padding: 20px;
+      border-radius: 8px;
+      font-size: 24px;
+      margin: 20px auto;
+      display: block;
+      width: 80%; /* Ajusta este valor para cambiar el ancho */
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 0;
+    }
+
+    p {
+      font-size: 16px;
+      margin: 10px 0;
+    }
+
+    a {
+      color: #0044cc;
+      text-decoration: none;
+    }
+
+    img {
+      max-width: 150px;
+      height: auto;
+      margin-top: 10px;
+    }
+
+    .activation-button {
+      background: linear-gradient(to right, #009EE4, #009EE4);;
+      color: #fff!important;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        ACTIVACIÓN DE CUENTA
+      </div>
+      <p style="padding-top: 7px;">Hola ${client.nombres} ${client.primer_apellido} ${client.segundo_apellido},</p>
+      <p>Bienvenido/a a ${process.env.COMPANY}. <br>  Haz clic en el siguiente botón para activar tu cuenta:</p>
+      <div style="text-align: center; margin: 20px;">
+        <a href="${process.env.BACKEND}/api/cliente/activate-user?token=${token}" class="activation-button">
+          Activar cuenta
+        </a>
+      </div>
+      <p style="font-size: 10px; color: #62667F; padding: 7px;">Este enlace de activación es valido por 2 Horas.</p>
+      <div class="footer">
+        <img src="${process.env.LOGO}" alt="Logo de la Empresa">
+      </div>
+    </div>
+  </div>
+</body>
+</html>

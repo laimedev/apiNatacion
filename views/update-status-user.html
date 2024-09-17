@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Usuario Activado</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #000;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .card {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+      margin: 20px auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .header, .footer {
+      background: linear-gradient(to right, #DFF3FB, #DFF3FB);
+      color: #fff;
+      padding: 15px;
+      font-size: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header {
+      border-radius: 8px 8px 0 0;
+    }
+    .footer {
+      border-radius: 0 0 8px 8px;
+      display: flex;
+      justify-content: center; /* Centra el contenido horizontalmente */
+      align-items: center; /* Centra el contenido verticalmente */
+    }
+    .content {
+      padding: 20px;
+    }
+    h1 {
+      font-size: 16px;
+      margin: 0;
+    }
+    p {
+      font-size: 14px;
+      margin: 10px 0;
+    }
+    a {
+      color: #DFF3FB;
+      text-decoration: none;
+    }
+    .logo-check {
+      max-width: 70px;
+      height: auto;
+      margin-top: 10px;
+    }
+    .close-button {
+      background: red;
+      color: #fff;
+      padding: 10px 20px;
+      border: 1px solid #fff;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+    }
+    .company-logo {
+      width: 150px;
+    }
+  </style>
+
+  <script>
+    function closeWindow() {
+      window.close();
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <span style="color: #036476"><b> ACTIVACIÓN</b></span>
+        <a href="#" class="close-button" onclick="closeWindow()"> X </a>
+      </div>
+      <div class="content">
+        <h1>Hola ${nombres}, tu cuenta fue activada. </h1> <br>
+        <p>Su correo electrónico es: <b> ${email} <b></p>
+        <p>Puede iniciar sesión en la aplicación.</p>
+        <img class="logo-check" src="https://cdn3.emoji.gg/emojis/1115_green_tick.gif" alt="Activado">
+        <h1>Muchas gracias</h1>
+      </div>
+      <div class="footer">
+        <img src="${process.env.LOGO}" alt="Logo de la Empresa" class="company-logo">
+      </div>
+    </div>
+  </div>
+</body>
+</html>
