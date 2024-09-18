@@ -27,6 +27,7 @@ router.post('/register', [
   check('genero').notEmpty().withMessage('El género es requerido'),
   check('tipoDocumento').notEmpty().withMessage('El tipo de documento es requerido'),
   check('numDocumento').notEmpty().withMessage('El número de documento es requerido'),
+  check('tipo').notEmpty().withMessage('El tipo de cliente es requerido'),
   check('email').isEmail().withMessage('Correo electrónico inválido'),
   check('password').isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres'),
   check('passwordConfirmation')
@@ -34,7 +35,6 @@ router.post('/register', [
     .withMessage('La confirmación de contraseña es requerida')
     .custom((value, { req }) => value === req.body.password)
     .withMessage('La confirmación de contraseña no coincide'),
-  check('direccion').notEmpty().withMessage('La dirección es requerida'),
   check('telefono').notEmpty().withMessage('El teléfono es requerido')
   ], async (req, res) => {
     const errors = validationResult(req);
@@ -42,7 +42,7 @@ router.post('/register', [
       return res.status(422).json({ errors: errors.array() });
     }
   try {
-    const { nombres, primer_apellido, segundo_apellido, genero, tipoDocumento, numDocumento, direccion, telefono, email, password, passwordConfirmation, foto } = req.body;
+    const { nombres, primer_apellido, segundo_apellido, genero, tipoDocumento, numDocumento, tipo, telefono, email, password, passwordConfirmation, foto } = req.body;
     // Verificar si el email ya está registrado
     const existingClient = await Clientes.findOne({ email });
     if (existingClient) {
@@ -62,7 +62,7 @@ router.post('/register', [
       genero,
       tipoDocumento,
       numDocumento,
-      direccion,
+      tipo,
       telefono,
       email,
       password: hashedPassword,
@@ -134,6 +134,59 @@ router.get('/activate-user', async (req, res) => {
 });
 
 
+
+// Ruta para iniciar sesión con email o numDocumento
+router.post('/login', [
+  check('identifier').notEmpty().withMessage('El email o número de documento es requerido'),
+  check('password').notEmpty().withMessage('La contraseña es requerida'),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
+
+  try {
+    const { identifier, password } = req.body; // El identifier puede ser email o numDocumento
+    
+    // Buscar al cliente por email o numDocumento
+    const cliente = await Clientes.findOneByEmailOrDocumento(identifier);
+    if (!cliente) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    // Verificar si el estado es ACTIVO
+    if (cliente.estado !== 'ACTIVO') {
+      return res.status(401).json({ error: 'Usuario inactivo, por favor revise la bandeja de entrada de su correo electrónico' });
+    }
+
+    // Verificar la contraseña
+    const isPasswordValid = await bcrypt.compare(password, cliente.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    // Generar el token JWT
+    const token = jwt.sign({ codCliente: cliente.codCliente, nombre: cliente.nombres, email: cliente.email }, process.env.JWT_SEC);
+
+    // Iniciar sesión exitosamente y devolver el token
+    return res.status(200).json({ 
+      ok: true,
+      token,
+      codCliente: cliente.codCliente,
+      nombre: cliente.nombres,
+      numDocumento: cliente.numDocumento,
+      email: cliente.email
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Error en el inicio de sesión' });
+  }
+});
+
+
+
+
+
 // Ruta para listar clientes con paginación, búsqueda, estado y filtro de fechas
 router.get('/list', async (req, res) => {
   try {
@@ -200,7 +253,7 @@ router.post('/export-excel', async (req, res) => {
       { header: 'Género', key: 'genero', width: 15 },
       { header: 'Tipo Documento', key: 'tipoDocumento', width: 20 },
       { header: 'Número Documento', key: 'numDocumento', width: 20 },
-      { header: 'Dirección', key: 'direccion', width: 40 },
+      { header: 'Tipo', key: 'tipo', width: 40 },
       { header: 'Teléfono', key: 'telefono', width: 20 },
       { header: 'Correo Electrónico', key: 'email', width: 30 },
       { header: 'Estado', key: 'estado', width: 15 },
@@ -237,7 +290,7 @@ router.post('/export-excel', async (req, res) => {
         genero: client.genero,
         tipoDocumento: client.tipoDocumento,
         numDocumento: client.numDocumento,
-        direccion: client.direccion,
+        tipo: client.tipo,
         telefono: client.telefono,
         email: client.email,
         estado: client.estado,
@@ -290,7 +343,7 @@ router.post('/edit/:codCliente', [
 ], async (req, res) => {
   try {
     const codCliente = req.params.codCliente;
-    const { nombres, primer_apellido, segundo_apellido, genero, tipoDocumento, numDocumento, direccion, telefono, email, password, passwordConfirmation } = req.body;
+    const { nombres, primer_apellido, segundo_apellido, genero, tipoDocumento, numDocumento, tipo, telefono, email, password, passwordConfirmation } = req.body;
 
     // Obtener el registro actual del cliente
     const currentClient = await Clientes.findById(codCliente);
@@ -312,7 +365,7 @@ router.post('/edit/:codCliente', [
       genero,
       tipoDocumento,
       numDocumento,
-      direccion,
+      tipo,
       telefono,
       email
     };

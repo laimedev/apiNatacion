@@ -5,7 +5,7 @@ const Clientes = {
   create: async (formData) => {
     try {
       const connection = await dbConnection(); // Obtener la conexión
-      const query = 'INSERT INTO Alumnos SET ?'; // Consulta SQL para insertar el registro
+      const query = 'INSERT INTO Clientes SET ?'; // Consulta SQL para insertar el registro
       const [result] = await connection.query(query, formData); // Ejecutar la consulta
       connection.release(); // Liberar la conexión a la base de datos
       return result.insertId; // Retornar el ID del nuevo registro
@@ -14,6 +14,18 @@ const Clientes = {
       throw new Error('Error al crear alumno');
     }
   },
+
+    findOneByEmailOrDocumento: async (identifier) => {
+      try {
+        const connection = await dbConnection();
+        const query = 'SELECT * FROM Clientes WHERE email = ? OR numDocumento = ?';
+        const [results] = await connection.query(query, [identifier, identifier]);
+        connection.release();
+        return results.length > 0 ? results[0] : null;
+      } catch (error) {
+        throw new Error('Error al buscar cliente por email o documento: ' + error);
+      }
+    },
 
   findOne: async (conditions) => {
     try {
