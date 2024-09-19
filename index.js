@@ -22,7 +22,7 @@ const Alumnos = require("./routes/alumnos")
 const Talleres = require("./routes/talleres")
 const Horarios = require("./routes/horarios")
 const Usuarios = require("./routes/usuarios")
-
+const Inscripciones = require("./routes/inscripciones")
 
 const ipn = require("./routes/ipn")
 
@@ -76,6 +76,7 @@ app.use("/api/alumno", Alumnos);
 app.use("/api/taller", Talleres);
 app.use("/api/horario", Horarios);
 app.use("/api/usuario", Usuarios);
+app.use("/api/inscripcion", Inscripciones);
 
 
 
