@@ -173,9 +173,10 @@ router.post('/login', [
       ok: true,
       token,
       codCliente: cliente.codCliente,
-      nombre: cliente.nombres,
+      nombre: cliente.nombres + ' ' + cliente.primer_apellido + ' ' + cliente.segundo_apellido,
       numDocumento: cliente.numDocumento,
-      email: cliente.email
+      email: cliente.email,
+      tipo: cliente.tipo,
     });
   } catch (error) {
     console.error(error);
