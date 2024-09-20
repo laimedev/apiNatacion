@@ -20,6 +20,8 @@ const Inscripciones = {
         const query = `
           SELECT 
             i.codInscripcion,
+            i.dias,
+            i.horario,
             i.fechaInscripcion,
             i.costoTarifa,
             i.codAlumno,
