@@ -7,7 +7,7 @@ const Pagos = require('../models/Pagos');
 // Crear una nueva inscripción y su respectivo pago
 router.post('/create', async (req, res) => {
   try {
-    const { costoTarifa, codAlumno, codCliente, codHorario, importePago, venta_id, tiempo, clases, email } = req.body;
+    const { costoTarifa, codAlumno, codCliente, codHorario, importePago, venta_id, tiempo, clases, email, dias, horario } = req.body;
 
     // Insertar la inscripción en la tabla Inscripciones
     const inscripcionData = {
@@ -19,7 +19,9 @@ router.post('/create', async (req, res) => {
       codHorario,
       tiempo,    // Duración de las clases (ejemplo: "2 horas")
       clases,    // Número de clases
-      email      // Email del usuario que se inscribe
+      email,      // Email del usuario que se inscribe
+      dias,
+      horario
     };
 
     const codInscripcion = await Inscripciones.create(inscripcionData);
