@@ -55,7 +55,40 @@ const Inscripciones = {
       } catch (error) {
         throw new Error('Error al obtener inscripciones con pagos y datos del cliente: ' + error);
       }
-    }
+    },
+
+
+      // Función para eliminar una inscripción y sus pagos asociados
+      deleteById: async (codInscripcion) => {
+        try {
+          const connection = await dbConnection();
+    
+          // Iniciar una transacción
+          await connection.beginTransaction();
+    
+          // Eliminar los pagos relacionados con la inscripción
+          const deletePagosQuery = 'DELETE FROM Pagos WHERE codInscripcion = ?';
+          await connection.query(deletePagosQuery, [codInscripcion]);
+    
+          // Eliminar la inscripción
+          const deleteInscripcionQuery = 'DELETE FROM Inscripciones WHERE codInscripcion = ?';
+          await connection.query(deleteInscripcionQuery, [codInscripcion]);
+    
+          // Confirmar la transacción
+          await connection.commit();
+          connection.release();
+    
+          return { message: 'Inscripción y pagos eliminados correctamente' };
+        } catch (error) {
+          console.error('Error al eliminar inscripción y pagos:', error);
+    
+          // Deshacer la transacción en caso de error
+          connection.rollback();
+          connection.release();
+    
+          throw new Error('Error al eliminar inscripción y pagos');
+        }
+      }
   
 };
 

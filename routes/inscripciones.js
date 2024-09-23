@@ -68,4 +68,20 @@ router.get('/cliente/:codCliente', async (req, res) => {
 
   
 
+  // Ruta para eliminar una inscripción y sus pagos
+router.delete('/delete/:codInscripcion', async (req, res) => {
+  const codInscripcion = req.params.codInscripcion;
+
+  try {
+    // Llamar a la función para eliminar la inscripción y sus pagos
+    const result = await Inscripciones.deleteById(codInscripcion);
+    
+    return res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    console.error('Error al eliminar inscripción y pagos:', error);
+    return res.status(500).json({ success: false, message: 'Error al eliminar inscripción y pagos' });
+  }
+});
+
+
 module.exports = router;
