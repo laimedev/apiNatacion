@@ -7,13 +7,14 @@ const Pagos = require('../models/Pagos');
 // Crear una nueva inscripción y su respectivo pago
 router.post('/create', async (req, res) => {
   try {
-    const { costoTarifa, codAlumno, codCliente, codHorario, importePago, venta_id, tiempo, clases, email, dias, horario } = req.body;
+    const { costoTarifa, codAlumno, codTalleres,codCliente, codHorario, importePago, venta_id, tiempo, clases, email, dias, horario } = req.body;
 
     // Insertar la inscripción en la tabla Inscripciones
     const inscripcionData = {
       fechaInscripcion: moment().format('YYYY-MM-DD HH:mm:ss'), // Fecha actual
       costoTarifa,
       codAlumno,
+      codTalleres,
       codCliente,
       codUsuario: 5,  // CodUsuario por defecto es 5
       codHorario,

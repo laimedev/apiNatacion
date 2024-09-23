@@ -174,4 +174,24 @@ router.post('/export-excel', async (req, res) => {
 
 
 
+  // Ruta para obtener horarios por codTalleres
+  router.get('/taller/:codTalleres', async (req, res) => {
+    const codTalleres = req.params.codTalleres;
+
+    try {
+      // Obtener horarios según el codTalleres
+      const horarios = await Horarios.getByTallerId(codTalleres);
+
+      if (horarios.length === 0) {
+        return res.status(404).json({ message: 'No se encontraron horarios para el taller especificado.' });
+      }
+
+      return res.status(200).json(horarios);
+    } catch (error) {
+      console.error('Error al obtener horarios:', error);
+      return res.status(500).json({ message: 'Error al obtener los horarios', error });
+    }
+  });
+
+
 module.exports = router;
