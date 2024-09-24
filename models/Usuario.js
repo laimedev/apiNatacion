@@ -26,6 +26,9 @@ const Usuario = {
     }
   },
 
+
+
+
   updateUser: async (codUsuario, updatedUserData) => {
     try {
       const connection = await dbConnection();

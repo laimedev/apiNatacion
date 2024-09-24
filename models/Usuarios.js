@@ -150,7 +150,23 @@ const Usuarios = {
     } catch (error) {
       throw new Error(error);
     }
-  }
+  },
+
+
+  findOneByEmailOrDocumento: async (identifier) => {
+    try {
+      const connection = await dbConnection();
+      const query = 'SELECT * FROM Usuarios WHERE email = ? OR numDocumento = ?';
+      const [results] = await connection.query(query, [identifier, identifier]);
+      connection.release();
+      return results.length > 0 ? results[0] : null;
+    } catch (error) {
+      throw new Error('Error al buscar usuario por email o documento: ' + error);
+    }
+  },
+
+
+  
 };
 
 module.exports = Usuarios;

@@ -322,5 +322,56 @@ router.post('/edit/:codUsuario', [
   }
 });
 
+
+
+// Ruta para iniciar sesión con email o numDocumento
+router.post('/login', [
+  check('identifier').notEmpty().withMessage('El email o número de documento es requerido'),
+  check('password').notEmpty().withMessage('La contraseña es requerida'),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
+
+  try {
+    const { identifier, password } = req.body; // El identifier puede ser email o numDocumento
+    
+    // Buscar al cliente por email o numDocumento
+    const usuario = await Usuarios.findOneByEmailOrDocumento(identifier);
+    if (!usuario) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    // Verificar si el estado es ACTIVO
+    if (usuario.estado !== 'ACTIVO') {
+      return res.status(401).json({ error: 'Usuario inactivo, por favor revise la bandeja de entrada de su correo electrónico' });
+    }
+
+    // Verificar la contraseña
+    const isPasswordValid = await bcrypt.compare(password, usuario.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    // Generar el token JWT
+    const token = jwt.sign({ codUsuario: usuario.codUsuario, usuario: usuario.nombres, email: usuario.email }, process.env.JWT_SEC);
+
+    // Iniciar sesión exitosamente y devolver el token
+    return res.status(200).json({ 
+      ok: true,
+      token,
+      codUsuario: usuario.codUsuario,
+      nombre: usuario.nombres + ' ' + usuario.primer_apellido + ' ' + usuario.segundo_apellido,
+      numDocumento: usuario.numDocumento,
+      email: usuario.email,
+      tipo: usuario.tipo,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Error en el inicio de sesión' });
+  }
+});
+
 module.exports = router;
 

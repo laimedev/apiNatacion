@@ -67,11 +67,24 @@ const Clientes = {
   deleteById: async (codCliente) => {
     try {
       const connection = await dbConnection();
-      const query = 'DELETE FROM Clientes WHERE codCliente = ?';
-      await connection.query(query, [codCliente]);
+
+      // Verificar si el cliente existe
+      const [rows] = await connection.query('SELECT * FROM Clientes WHERE codCliente = ?', [codCliente]);
+      
+      if (rows.length === 0) {
+        // Cliente no encontrado
+        connection.release();
+        return { success: false, message: 'Cliente no encontrado' };
+      }
+
+      // Si el cliente existe, proceder a eliminar
+      const deleteQuery = 'DELETE FROM Clientes WHERE codCliente = ?';
+      await connection.query(deleteQuery, [codCliente]);
+      
       connection.release();
+      return { success: true, message: 'Cliente eliminado correctamente' };
     } catch (error) {
-      throw new Error(error);
+      throw new Error('Error al eliminar cliente: ' + error.message);
     }
   },
 
@@ -91,7 +104,7 @@ const Clientes = {
   exportData: async () => {
     try {
       const connection = await dbConnection();
-      const query = `SELECT codCliente, nombres, primer_apellido, segundo_apellido, genero, tipoDocumento, numDocumento, direccion, telefono, email, estado, creacion
+      const query = `SELECT codCliente, nombres, primer_apellido, segundo_apellido, genero, tipoDocumento, numDocumento, telefono, email, estado, creacion
                      FROM Clientes`;
       const [rows] = await connection.query(query);
       connection.release();
