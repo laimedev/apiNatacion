@@ -68,6 +68,26 @@ router.get('/cliente/:codCliente', async (req, res) => {
 
   
 
+  router.get('/list', async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const searchTerm = req.query.searchTerm || '';
+    const codTalleres = req.query.codTalleres || '';  // Filtrar por codTalleres
+    const startDate = req.query.startDate || '';
+    const endDate = req.query.endDate || '';
+  
+    try {
+      const { inscripciones, total } = await Inscripciones.getByFilters(page, limit, searchTerm, codTalleres, startDate, endDate);
+      
+      res.status(200).json({ data: inscripciones, total });
+    } catch (error) {
+      console.error('Error al listar inscripciones:', error);
+      res.status(500).json({ error: 'Error al listar inscripciones' });
+    }
+  });
+
+
+
   // Ruta para eliminar una inscripción y sus pagos
 router.delete('/delete/:codInscripcion', async (req, res) => {
   const codInscripcion = req.params.codInscripcion;
