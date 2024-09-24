@@ -104,4 +104,32 @@ router.delete('/delete/:codInscripcion', async (req, res) => {
 });
 
 
+
+
+
+// Ruta para actualizar clasesCompleta
+router.post('/update-clases-completa/:codInscripcion', async (req, res) => {
+  const codInscripcion = req.params.codInscripcion;
+  const { clasesCompletas } = req.body;
+
+  if (clasesCompletas === undefined) {
+    return res.status(400).json({ error: 'El campo clasesCompleta es requerido.' });
+  }
+
+  try {
+    const result = await Inscripciones.updateClasesCompleta(codInscripcion, clasesCompletas);
+
+    if (result > 0) {
+      res.status(200).json({ success: 'La columna clasesCompleta fue actualizada exitosamente.' });
+    } else {
+      res.status(404).json({ error: 'Inscripción no encontrada.' });
+    }
+  } catch (error) {
+    console.error('Error al actualizar clasesCompleta:', error);
+    res.status(500).json({ error: 'Error al actualizar clasesCompleta.' });
+  }
+});
+
+
+
 module.exports = router;

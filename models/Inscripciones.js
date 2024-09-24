@@ -20,6 +20,7 @@ const Inscripciones = {
       const query = `
         SELECT 
           i.codInscripcion,
+          i.clasesCompletas,
           i.codTalleres,
           t.titulo AS nombreTaller,   -- Aquí incluimos el título del taller
           i.dias,
@@ -63,6 +64,19 @@ const Inscripciones = {
   },
   
 
+  findById: async (codInscripcion) => {
+    try {
+      const connection = await dbConnection();
+      const query = 'SELECT * FROM Inscripciones WHERE codInscripcion = ?';
+      const [rows] = await connection.query(query, [codInscripcion]);
+      connection.release();
+      return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+      throw new Error('Error al buscar inscripción por codInscripcion: ' + error.message);
+    }
+  },
+
+
   getByFilters: async (page = 1, limit = 10, searchTerm = '', codTalleres = '', startDate = '', endDate = '') => {
     try {
       const connection = await dbConnection();
@@ -71,6 +85,7 @@ const Inscripciones = {
       let query = `
         SELECT 
           i.codInscripcion,
+          i.clasesCompletas,
           i.codTalleres,
           t.titulo AS nombreTaller,
           i.dias,
@@ -198,7 +213,24 @@ const Inscripciones = {
     
           throw new Error('Error al eliminar inscripción y pagos');
         }
-      }
+      },
+
+
+    // Actualizar la columna clasesCompleta por codInscripcion
+      // Actualizar la columna clasesCompleta por codInscripcion
+  updateClasesCompleta: async (codInscripcion, clasesCompletas) => {
+    try {
+      const connection = await dbConnection();
+      const query = 'UPDATE Inscripciones SET clasesCompletas = ? WHERE codInscripcion = ?';
+      const [result] = await connection.query(query, [clasesCompletas, codInscripcion]);
+      connection.release();
+      return result.affectedRows;
+    } catch (error) {
+      throw new Error('Error al actualizar clasesCompleta: ' + error.message);
+    }
+  }
+  
+
   
 };
 
