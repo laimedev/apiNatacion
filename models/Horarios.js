@@ -58,52 +58,87 @@ const Horarios = {
     try {
       const connection = await dbConnection();
       const offset = (page - 1) * limit;
-      let query = 'SELECT * FROM Horarios WHERE 1=1';
+
+      // Consulta SQL con JOIN entre Horarios y Talleres para obtener el nombre del taller
+      let query = `
+        SELECT 
+          h.codHorario,
+          h.dias,
+          h.horario, -- El campo que contiene el JSON string
+          h.tiempo,
+          h.precio,
+          h.precioSurcano,
+          h.sesiones,
+          h.vacantes,
+          h.codInstructor,
+          h.codTalleres,
+          t.titulo AS nombreTaller -- Aquí se incluye el título del taller
+        FROM 
+          Horarios h
+        LEFT JOIN 
+          Talleres t ON h.codTalleres = t.codTalleres
+        WHERE 1=1`;
 
       // Filtro de búsqueda por días, codTalleres o codInstructor
       if (search) {
-        query += ` AND (dias LIKE '%${search}%' OR codTalleres LIKE '%${search}%' OR codInstructor LIKE '%${search}%')`;
+        query += ` AND (h.dias LIKE '%${search}%' OR h.codTalleres LIKE '%${search}%' OR h.codInstructor LIKE '%${search}%')`;
       }
 
       // Filtro por estado
       if (status) {
-        query += ` AND estado = '${status}'`;
+        query += ` AND h.estado = '${status}'`;
       }
 
       // Filtro por rango de fechas (creación)
       if (startDate && endDate) {
-        query += ` AND creacion BETWEEN '${startDate}' AND '${endDate}'`;
+        query += ` AND h.creacion BETWEEN '${startDate}' AND '${endDate}'`;
       }
 
       // Ordenar por fecha de creación descendente
-      query += ' ORDER BY creacion DESC';
+      query += ' ORDER BY h.creacion DESC';
 
       // Paginación
       query += ` LIMIT ${limit} OFFSET ${offset}`;
 
       const [rows] = await connection.query(query);
 
+      // Convertir el campo "horario" de string a JSON array para cada fila
+      const horarios = rows.map(row => {
+        if (row.horario) {
+          try {
+            row.horario = JSON.parse(row.horario); // Convertir el string a JSON array
+          } catch (error) {
+            console.error('Error al parsear el campo horario a JSON:', error);
+          }
+        }
+        return row;
+      });
+
       // Contar el total de registros (para la paginación)
-      const countQuery = 'SELECT COUNT(*) AS total FROM Horarios WHERE 1=1';
-      let totalQuery = countQuery;
+      let totalQuery = `
+        SELECT COUNT(*) AS total
+        FROM Horarios h
+        LEFT JOIN Talleres t ON h.codTalleres = t.codTalleres
+        WHERE 1=1`;
 
       if (search) {
-        totalQuery += ` AND (dias LIKE '%${search}%' OR codTalleres LIKE '%${search}%' OR codInstructor LIKE '%${search}%')`;
+        totalQuery += ` AND (h.dias LIKE '%${search}%' OR h.codTalleres LIKE '%${search}%' OR h.codInstructor LIKE '%${search}%')`;
       }
       if (status) {
-        totalQuery += ` AND estado = '${status}'`;
+        totalQuery += ` AND h.estado = '${status}'`;
       }
       if (startDate && endDate) {
-        totalQuery += ` AND creacion BETWEEN '${startDate}' AND '${endDate}'`;
+        totalQuery += ` AND h.creacion BETWEEN '${startDate}' AND '${endDate}'`;
       }
 
       const [countRows] = await connection.query(totalQuery);
       const total = countRows[0].total;
 
       connection.release();
-      return { horarios: rows, total };
+
+      return { horarios, total };
     } catch (error) {
-      throw new Error(error);
+      throw new Error('Error al obtener horarios: ' + error.message);
     }
   },
 
