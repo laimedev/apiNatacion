@@ -193,12 +193,12 @@ router.get('/list', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const search = req.query.search || '';
+    const searchTerm = req.query.searchTerm || '';
     const status = req.query.status || '';
     const startDate = req.query.startDate || '';
     const endDate = req.query.endDate || '';
 
-    const { clients, total } = await Clientes.getClients(page, limit, search, status, startDate, endDate);
+    const { clients, total } = await Clientes.getClients(page, limit, searchTerm, status, startDate, endDate);
 
     res.status(200).json({ data: clients, total });
   } catch (error) {

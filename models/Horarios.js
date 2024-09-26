@@ -2,15 +2,24 @@ const dbConnection = require('../core/db_config');
 
 const Horarios = {
   // Crear un nuevo horario
-  create: async (formData) => {
+  create: async (horarioData) => {
     try {
       const connection = await dbConnection();
+  
+      // Verificar si el campo 'horario' es un texto plano y formatearlo a JSON si es necesario
+      if (horarioData.horario && typeof horarioData.horario === 'string') {
+        horarioData.horario = `[{"hora": "${horarioData.horario}"}]`;
+      } else {
+        // Si el campo 'horario' está vacío o no se envía, almacenarlo como un array vacío
+        horarioData.horario = '[]';
+      }
+  
       const query = 'INSERT INTO Horarios SET ?';
-      const result = await connection.query(query, formData);
+      const [result] = await connection.query(query, horarioData);
       connection.release();
-      return result.insertId;
+      return result.insertId; // Retorna el ID del horario creado
     } catch (error) {
-      throw new Error(error);
+      throw new Error('Error al crear el horario: ' + error);
     }
   },
 
@@ -27,18 +36,41 @@ const Horarios = {
     }
   },
 
-  // Actualizar un horario
+
   update: async (codHorario, formData) => {
     try {
       const connection = await dbConnection();
+  
+      // Verificar si el campo 'horario' es un texto plano y formatearlo a JSON si es necesario
+      if (formData.horario && typeof formData.horario === 'string') {
+        formData.horario = `[{"hora": "${formData.horario}"}]`;
+      } else if (!formData.horario || formData.horario === "") {
+        // Si el campo 'horario' está vacío, almacenarlo como un array vacío
+        formData.horario = '[]';
+      }
+  
       const query = 'UPDATE Horarios SET ? WHERE codHorario = ?';
-      const result = await connection.query(query, [formData, codHorario]);
+      await connection.query(query, [formData, codHorario]);
       connection.release();
-      return result.affectedRows;
+      return true; // Retorna true si se actualiza correctamente
     } catch (error) {
-      throw new Error(error);
+      throw new Error('Error al actualizar el horario: ' + error);
     }
   },
+
+
+  // Actualizar un horario
+  // update: async (codHorario, formData) => {
+  //   try {
+  //     const connection = await dbConnection();
+  //     const query = 'UPDATE Horarios SET ? WHERE codHorario = ?';
+  //     const result = await connection.query(query, [formData, codHorario]);
+  //     connection.release();
+  //     return result.affectedRows;
+  //   } catch (error) {
+  //     throw new Error(error);
+  //   }
+  // },
 
   // Cambiar el estado de un horario
   changeStatus: async (codHorario, estado) => {
@@ -54,7 +86,7 @@ const Horarios = {
   },
 
   // Listar horarios con filtros de paginación, búsqueda, estado, y fechas
-  getHorarios: async (page = 1, limit = 10, search = '', status = '', startDate = '', endDate = '') => {
+  getHorariosNatacion: async (page = 1, limit = 10, search = '', status = '', startDate = '', endDate = '') => {
     try {
       const connection = await dbConnection();
       const offset = (page - 1) * limit;
@@ -78,11 +110,12 @@ const Horarios = {
           Horarios h
         LEFT JOIN 
           Talleres t ON h.codTalleres = t.codTalleres
-        WHERE 1=1`;
+        WHERE 1=1 AND h.codTalleres = '1'`;
 
       // Filtro de búsqueda por días, codTalleres o codInstructor
       if (search) {
-        query += ` AND h.codTalleres LIKE '%${search}%'`;
+        query += ` AND h.estado LIKE '${search}'`;
+        // query += ` AND h.estado LIKE '%${search}%'`;
       }
 
       // Filtro por estado
@@ -120,7 +153,7 @@ const Horarios = {
         SELECT COUNT(*) AS total
         FROM Horarios h
         LEFT JOIN Talleres t ON h.codTalleres = t.codTalleres
-        WHERE 1=1`;
+        WHERE 1=1 AND h.codTalleres = '1'`;
 
       if (search) {
         totalQuery += ` AND (h.dias LIKE '%${search}%' OR h.codTalleres LIKE '%${search}%' OR h.codInstructor LIKE '%${search}%')`;
@@ -142,6 +175,192 @@ const Horarios = {
       throw new Error('Error al obtener horarios: ' + error.message);
     }
   },
+
+
+
+  // Listar horarios con filtros de paginación, búsqueda, estado, y fechas
+  getHorariosVoley: async (page = 1, limit = 10, search = '', status = '', startDate = '', endDate = '') => {
+    try {
+      const connection = await dbConnection();
+      const offset = (page - 1) * limit;
+
+      // Consulta SQL con JOIN entre Horarios y Talleres para obtener el nombre del taller
+      let query = `
+        SELECT 
+          h.codHorario,
+          h.dias,
+          h.horario, -- El campo que contiene el JSON string
+          h.tiempo,
+          h.precio,
+          h.precioSurcano,
+          h.sesiones,
+          h.vacantes,
+          h.codInstructor,
+          h.codTalleres,
+          h.estado,
+          t.titulo AS nombreTaller -- Aquí se incluye el título del taller
+        FROM 
+          Horarios h
+        LEFT JOIN 
+          Talleres t ON h.codTalleres = t.codTalleres
+        WHERE 1=1 AND h.codTalleres = '2'`;
+
+      // Filtro de búsqueda por días, codTalleres o codInstructor
+      if (search) {
+        query += ` AND h.estado LIKE '${search}'`;
+        // query += ` AND h.estado LIKE '%${search}%'`;
+      }
+
+      // Filtro por estado
+      if (status) {
+        query += ` AND h.estado = '${status}'`;
+      }
+
+      // Filtro por rango de fechas (creación)
+      if (startDate && endDate) {
+        query += ` AND h.creacion BETWEEN '${startDate}' AND '${endDate}'`;
+      }
+
+      // Ordenar por fecha de creación descendente
+      query += ' ORDER BY h.creacion DESC';
+
+      // Paginación
+      query += ` LIMIT ${limit} OFFSET ${offset}`;
+
+      const [rows] = await connection.query(query);
+
+      // Convertir el campo "horario" de string a JSON array para cada fila
+      const horarios = rows.map(row => {
+        if (row.horario) {
+          try {
+            row.horario = JSON.parse(row.horario); // Convertir el string a JSON array
+          } catch (error) {
+            console.error('Error al parsear el campo horario a JSON:', error);
+          }
+        }
+        return row;
+      });
+
+      // Contar el total de registros (para la paginación)
+      let totalQuery = `
+        SELECT COUNT(*) AS total
+        FROM Horarios h
+        LEFT JOIN Talleres t ON h.codTalleres = t.codTalleres
+        WHERE 1=1 AND h.codTalleres = '2'`;
+
+      if (search) {
+        totalQuery += ` AND (h.dias LIKE '%${search}%' OR h.codTalleres LIKE '%${search}%' OR h.codInstructor LIKE '%${search}%')`;
+      }
+      if (status) {
+        totalQuery += ` AND h.estado = '${status}'`;
+      }
+      if (startDate && endDate) {
+        totalQuery += ` AND h.creacion BETWEEN '${startDate}' AND '${endDate}'`;
+      }
+
+      const [countRows] = await connection.query(totalQuery);
+      const total = countRows[0].total;
+
+      connection.release();
+
+      return { horarios, total };
+    } catch (error) {
+      throw new Error('Error al obtener horarios: ' + error.message);
+    }
+  },
+
+
+  // Listar horarios con filtros de paginación, búsqueda, estado, y fechas
+  getHorariosBasquet: async (page = 1, limit = 10, search = '', status = '', startDate = '', endDate = '') => {
+    try {
+      const connection = await dbConnection();
+      const offset = (page - 1) * limit;
+
+      // Consulta SQL con JOIN entre Horarios y Talleres para obtener el nombre del taller
+      let query = `
+        SELECT 
+          h.codHorario,
+          h.dias,
+          h.horario, -- El campo que contiene el JSON string
+          h.tiempo,
+          h.precio,
+          h.precioSurcano,
+          h.sesiones,
+          h.vacantes,
+          h.codInstructor,
+          h.codTalleres,
+          h.estado,
+          t.titulo AS nombreTaller -- Aquí se incluye el título del taller
+        FROM 
+          Horarios h
+        LEFT JOIN 
+          Talleres t ON h.codTalleres = t.codTalleres
+        WHERE 1=1 AND h.codTalleres = '3'`;
+
+      // Filtro de búsqueda por días, codTalleres o codInstructor
+      if (search) {
+        query += ` AND h.estado LIKE '${search}'`;
+        // query += ` AND h.estado LIKE '%${search}%'`;
+      }
+
+      // Filtro por estado
+      if (status) {
+        query += ` AND h.estado = '${status}'`;
+      }
+
+      // Filtro por rango de fechas (creación)
+      if (startDate && endDate) {
+        query += ` AND h.creacion BETWEEN '${startDate}' AND '${endDate}'`;
+      }
+
+      // Ordenar por fecha de creación descendente
+      query += ' ORDER BY h.creacion DESC';
+
+      // Paginación
+      query += ` LIMIT ${limit} OFFSET ${offset}`;
+
+      const [rows] = await connection.query(query);
+
+      // Convertir el campo "horario" de string a JSON array para cada fila
+      const horarios = rows.map(row => {
+        if (row.horario) {
+          try {
+            row.horario = JSON.parse(row.horario); // Convertir el string a JSON array
+          } catch (error) {
+            console.error('Error al parsear el campo horario a JSON:', error);
+          }
+        }
+        return row;
+      });
+
+      // Contar el total de registros (para la paginación)
+      let totalQuery = `
+        SELECT COUNT(*) AS total
+        FROM Horarios h
+        LEFT JOIN Talleres t ON h.codTalleres = t.codTalleres
+        WHERE 1=1 AND h.codTalleres = '3'`;
+
+      if (search) {
+        totalQuery += ` AND (h.dias LIKE '%${search}%' OR h.codTalleres LIKE '%${search}%' OR h.codInstructor LIKE '%${search}%')`;
+      }
+      if (status) {
+        totalQuery += ` AND h.estado = '${status}'`;
+      }
+      if (startDate && endDate) {
+        totalQuery += ` AND h.creacion BETWEEN '${startDate}' AND '${endDate}'`;
+      }
+
+      const [countRows] = await connection.query(totalQuery);
+      const total = countRows[0].total;
+
+      connection.release();
+
+      return { horarios, total };
+    } catch (error) {
+      throw new Error('Error al obtener horarios: ' + error.message);
+    }
+  },
+
 
 
   getByTallerId: async (codTalleres) => {
@@ -202,14 +421,52 @@ const Horarios = {
   exportData: async () => {
     try {
       const connection = await dbConnection();
-      const query = 'SELECT * FROM Horarios';
+      const query = `
+        SELECT 
+          h.codHorario,
+          h.dias,
+          h.horario,
+          h.precio,
+          h.precioSurcano,
+          h.sesiones,
+          h.vacantes,
+          h.codInstructor,
+          h.codTalleres,
+          h.estado,
+          h.creacion,
+          t.titulo AS nombreTaller,
+          CONCAT(u.nombres, ' ', u.primer_apellido, ' ', u.segundo_apellido) AS nombreInstructor
+        FROM 
+          Horarios h
+        LEFT JOIN 
+          Talleres t ON h.codTalleres = t.codTalleres
+        LEFT JOIN 
+          Usuarios u ON h.codInstructor = u.codUsuario
+        WHERE 
+          h.estado = 'ACTIVO'
+        ORDER BY 
+          h.codTalleres ASC
+      `;
       const [rows] = await connection.query(query);
       connection.release();
+  
+      // Extraer solo el primer elemento del array "horario"
+      rows.forEach(row => {
+        try {
+          const horarioArray = JSON.parse(row.horario);
+          row.horario = Array.isArray(horarioArray) && horarioArray.length > 0 ? horarioArray[0].hora : '';
+        } catch (error) {
+          row.horario = ''; // Si falla el parseo, se establece como un string vacío
+        }
+      });
+  
       return rows;
     } catch (error) {
       throw new Error(error);
     }
   },
+  
+  
 
 
 
@@ -244,6 +501,76 @@ getVacantes: async (codHorario) => {
     throw new Error('Error al obtener vacantes: ' + error);
   }
 },
+
+
+
+getHorarioById: async (codHorario) => {
+  try {
+    const connection = await dbConnection();
+    
+    // Consulta para obtener el horario con detalles del taller e instructor
+    const query = `
+      SELECT 
+        h.codHorario,
+        h.codTalleres,
+        h.dias,
+        h.horario,
+        h.tiempo,
+        h.precio,
+        h.precioSurcano,
+        h.sesiones,
+        h.vacantes,
+        h.codInstructor,
+        t.titulo AS nombreTaller,
+        u.nombres AS nombreInstructor
+      FROM 
+        Horarios h
+      LEFT JOIN 
+        Talleres t ON h.codTalleres = t.codTalleres
+      LEFT JOIN
+        Usuarios u ON h.codInstructor = u.codUsuario
+      WHERE 
+        h.codHorario = ?`;
+        
+    const [rows] = await connection.query(query, [codHorario]);
+    connection.release();
+
+    // Verificar si se encontró el horario
+    if (rows.length === 0) {
+      return { success: false, message: 'Horario no encontrado' };
+    }
+
+    // Parsear el campo "horario" para mostrar solo el primer elemento como texto
+    const horarioData = rows[0];
+    let horarioText = '';
+    if (horarioData.horario) {
+      const horarioArray = JSON.parse(horarioData.horario);
+      horarioText = horarioArray.length > 0 ? horarioArray[0].hora : '';
+    }
+
+    // Retornar el horario encontrado con los campos solicitados
+    return {
+      success: true,
+      horario: {
+        codHorario: horarioData.codHorario,
+        codTalleres: horarioData.codTalleres,
+        dias: horarioData.dias,
+        horario: horarioText, // Mostrar solo el primer elemento del horario como texto
+        tiempo: horarioData.tiempo,
+        precio: horarioData.precio,
+        precioSurcano: horarioData.precioSurcano,
+        sesiones: horarioData.sesiones,
+        vacantes: horarioData.vacantes,
+        codInstructor: horarioData.codInstructor,
+        nombreTaller: horarioData.nombreTaller,
+        nombreInstructor: horarioData.nombreInstructor
+      },
+    };
+  } catch (error) {
+    throw new Error('Error al obtener el horario por ID: ' + error);
+  }
+}
+
 
 
 

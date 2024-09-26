@@ -5,33 +5,35 @@ const ExcelJS = require('exceljs');
 const { check, validationResult } = require('express-validator');
 
 // Crear un nuevo horario
-router.post('/create', [
-  check('dias').notEmpty().withMessage('El campo "días" es requerido'),
-  check('hora_inicio').notEmpty().withMessage('El campo "hora_inicio" es requerido'),
-  check('hora_fin').notEmpty().withMessage('El campo "hora_fin" es requerido'),
-  check('precio').notEmpty().withMessage('El campo "precio" es requerido'),
-  check('sesiones').notEmpty().withMessage('El campo "sesiones" es requerido'),
-  check('vacantes').notEmpty().withMessage('El campo "vacantes" es requerido')
-], async (req, res) => {
+router.post('/create', async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(422).json({ errors: errors.array() });
-    }
+    const { codTalleres, dias, horario, tiempo, precio, precioSurcano, sesiones, vacantes, codInstructor, estado } = req.body;
 
-    const formData = {
-      ...req.body,
-      estado: 'ACTIVO', // Estado inicial
+    // Construir el objeto con los datos para el horario
+    const horarioData = {
+      codTalleres,
+      dias,
+      horario, // Aquí el horario será procesado en el modelo según se pase vacío o con un texto plano
+      tiempo,
+      precio,
+      precioSurcano,
+      sesiones,
+      vacantes,
+      codInstructor,
+      estado: estado || 'ACTIVO', // Establecer el estado como INACTIVO por defecto si no se pasa
       creacion: new Date().toISOString()
     };
 
-    const horarioId = await Horarios.create(formData);
-    res.status(201).json({ success: 'Horario creado exitosamente', horarioId });
+    // Llamar al modelo para crear el horario
+    const codHorario = await Horarios.create(horarioData);
+
+    return res.status(201).json({ success: true, message: 'Horario creado correctamente', codHorario });
   } catch (error) {
     console.error('Error al crear el horario:', error);
-    res.status(500).json({ error: 'Error al crear el horario' });
+    return res.status(500).json({ success: false, message: 'Error al crear el horario', error });
   }
 });
+
 
 // Actualizar un horario
 router.post('/edit/:codHorario', async (req, res) => {
@@ -45,14 +47,38 @@ router.post('/edit/:codHorario', async (req, res) => {
       return res.status(404).json({ error: 'Horario no encontrado' });
     }
 
-    // Actualizar el horario
+    // Actualizar el horario con el modelo
     await Horarios.update(codHorario, formData);
+
     res.status(200).json({ success: 'Horario actualizado exitosamente' });
   } catch (error) {
     console.error('Error al actualizar el horario:', error);
     res.status(500).json({ error: 'Error al actualizar el horario' });
   }
 });
+
+
+// Ruta para obtener un horario por su ID (codHorario)
+router.get('/getById/:codHorario', async (req, res) => {
+  try {
+    const codHorario = req.params.codHorario;
+
+    // Llamar a la función del modelo para obtener el horario por ID
+    const result = await Horarios.getHorarioById(codHorario);
+
+    // Si no se encuentra el horario, devolver mensaje de error
+    if (!result.success) {
+      return res.status(404).json({ error: result.message });
+    }
+
+    // Responder con la información del horario
+    return res.status(200).json(result.horario);
+  } catch (error) {
+    console.error('Error al obtener el horario por ID:', error);
+    return res.status(500).json({ error: 'Error al obtener el horario' });
+  }
+});
+
 
 // Cambiar el estado de un horario
 router.post('/changeStatus/:codHorario', [
@@ -78,16 +104,56 @@ router.post('/changeStatus/:codHorario', [
 });
 
 // Listar horarios con filtros
-router.get('/list', async (req, res) => {
+router.get('/listNatacion', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const search = req.query.search || '';
+    const searchTerm = req.query.searchTerm || '';
     const status = req.query.status || '';
     const startDate = req.query.startDate || '';
     const endDate = req.query.endDate || '';
 
-    const { horarios, total } = await Horarios.getHorarios(page, limit, search, status, startDate, endDate);
+    const { horarios, total } = await Horarios.getHorariosNatacion(page, limit, searchTerm, status, startDate, endDate);
+    res.status(200).json({ data: horarios, total });
+  } catch (error) {
+    console.error('Error al listar los horarios:', error);
+    res.status(500).json({ error: 'Error al listar los horarios' });
+  }
+});
+
+
+
+// Listar horarios con filtros
+router.get('/listVoley', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const searchTerm = req.query.searchTerm || '';
+    const status = req.query.status || '';
+    const startDate = req.query.startDate || '';
+    const endDate = req.query.endDate || '';
+
+    const { horarios, total } = await Horarios.getHorariosVoley(page, limit, searchTerm, status, startDate, endDate);
+    res.status(200).json({ data: horarios, total });
+  } catch (error) {
+    console.error('Error al listar los horarios:', error);
+    res.status(500).json({ error: 'Error al listar los horarios' });
+  }
+});
+
+
+
+// Listar horarios con filtros
+router.get('/listBasquet', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const searchTerm = req.query.searchTerm || '';
+    const status = req.query.status || '';
+    const startDate = req.query.startDate || '';
+    const endDate = req.query.endDate || '';
+
+    const { horarios, total } = await Horarios.getHorariosBasquet(page, limit, searchTerm, status, startDate, endDate);
     res.status(200).json({ data: horarios, total });
   } catch (error) {
     console.error('Error al listar los horarios:', error);
@@ -120,57 +186,120 @@ router.delete('/delete/:codHorario', async (req, res) => {
 
   
 // Exportar horarios a Excel
-router.post('/export-excel', async (req, res) => {
-    try {
-      const data = await Horarios.exportData();
-  
-      // Crear un nuevo libro de Excel
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Horarios');
-  
-      // Encabezados de las columnas
-      worksheet.columns = [
-        { header: 'ID', key: 'codHorario', width: 10 },
-        { header: 'Días', key: 'dias', width: 30 },
-        { header: 'Hora Inicio', key: 'hora_inicio', width: 20 },
-        { header: 'Hora Fin', key: 'hora_fin', width: 20 },
-        { header: 'Precio', key: 'precio', width: 15 },
-        { header: 'Sesiones', key: 'sesiones', width: 10 },
-        { header: 'Vacantes', key: 'vacantes', width: 10 },
-        { header: 'Instructor', key: 'codInstructor', width: 20 },
-        { header: 'Taller', key: 'codTalleres', width: 20 },
-        { header: 'Estado', key: 'estado', width: 15 },
-        { header: 'Fecha de Creación', key: 'creacion', width: 20 }
-      ];
-  
-      // Añadir los datos al archivo Excel
-      data.forEach((horario) => {
-        worksheet.addRow({
-          codHorario: horario.codHorario,
-          dias: horario.dias,
-          hora_inicio: horario.hora_inicio,
-          hora_fin: horario.hora_fin,
-          precio: horario.precio,
-          sesiones: horario.sesiones,
-          vacantes: horario.vacantes,
-          codInstructor: horario.codInstructor,
-          codTalleres: horario.codTalleres,
-          estado: horario.estado,
-          creacion: horario.creacion
-        });
+// Router para exportar inscripciones a un archivo Excel
+router.post('/export-inscripciones', async (req, res) => {
+  try {
+    // Obtener datos de inscripciones desde el modelo
+    const data = await Inscripciones.exportInscripciones();
+
+    // Crear un nuevo libro de Excel
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Inscripciones');
+
+    // Encabezados de las columnas
+    worksheet.columns = [
+      { header: 'ID Inscripción', key: 'codInscripcion', width: 15 },
+      { header: 'Nombre Taller', key: 'nombreTaller', width: 20 },
+      { header: 'Días', key: 'dias', width: 15 },
+      { header: 'Horario', key: 'horario', width: 30 }, // Mostrar solo el primer horario si es un array
+      { header: 'Fecha Inscripción', key: 'fechaInscripcion', width: 20 },
+      { header: 'Costo Tarifa', key: 'costoTarifa', width: 15 },
+      { header: 'Clases Completas', key: 'clasesCompletas', width: 15 },
+      { header: 'Tiempo', key: 'tiempo', width: 15 },
+      { header: 'Clases', key: 'clases', width: 10 },
+      { header: 'Email Inscripción', key: 'emailInscripcion', width: 30 },
+      { header: 'Fecha Pago', key: 'fechaPago', width: 20 },
+      { header: 'Método Pago', key: 'metodoPago', width: 20 },
+      { header: 'Importe Pago', key: 'importePago', width: 15 },
+      { header: 'Venta ID', key: 'venta_id', width: 15 },
+      { header: 'Nombre Cliente', key: 'nombres', width: 20 },
+      { header: 'Primer Apellido Cliente', key: 'primer_apellido', width: 20 },
+      { header: 'Segundo Apellido Cliente', key: 'segundo_apellido', width: 20 },
+      { header: 'Teléfono', key: 'telefono', width: 15 },
+      { header: 'Email Cliente', key: 'emailCliente', width: 30 },
+      { header: 'Documento', key: 'numDocumento', width: 15 },
+      { header: 'Tipo Cliente', key: 'tipoCliente', width: 20 }
+    ];
+
+    // Añadir estilo al encabezado
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: '1872A1' } // Azul para la cabecera
+      };
+    });
+
+    // Añadir los datos al archivo Excel y aplicar estilos según el título del taller
+    data.forEach((inscripcion) => {
+      const row = worksheet.addRow({
+        codInscripcion: inscripcion.codInscripcion,
+        nombreTaller: inscripcion.nombreTaller,
+        dias: inscripcion.dias,
+        horario: inscripcion.horario.length ? inscripcion.horario[0]?.hora : 'No definido', // Mostrar solo el primer elemento del array "horario"
+        fechaInscripcion: inscripcion.fechaInscripcion,
+        costoTarifa: inscripcion.costoTarifa,
+        clasesCompletas: inscripcion.clasesCompletas,
+        tiempo: inscripcion.tiempo,
+        clases: inscripcion.clases,
+        emailInscripcion: inscripcion.emailInscripcion,
+        fechaPago: inscripcion.fechaPago,
+        metodoPago: inscripcion.metodoPago,
+        importePago: inscripcion.importePago,
+        venta_id: inscripcion.venta_id,
+        nombres: inscripcion.nombres,
+        primer_apellido: inscripcion.primer_apellido,
+        segundo_apellido: inscripcion.segundo_apellido,
+        telefono: inscripcion.telefono,
+        emailCliente: inscripcion.emailCliente,
+        numDocumento: inscripcion.numDocumento,
+        tipoCliente: inscripcion.tipoCliente
       });
-  
-      // Generar el archivo Excel y enviarlo como respuesta
-      const buffer = await workbook.xlsx.writeBuffer();
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', 'attachment; filename=horarios.xlsx');
-      res.send(buffer);
-  
-    } catch (error) {
-      console.error('Error al exportar los horarios a Excel:', error);
-      return res.status(500).json({ error: 'Error al exportar los horarios a Excel' });
-    }
-  });
+
+      // Establecer color de fondo según el nombre del taller
+      let bgColor;
+      switch (inscripcion.nombreTaller) {
+        case 'Natación':
+          bgColor = 'B9D6EC'; // Celeste
+          break;
+        case 'Voley':
+          bgColor = 'E0CAF0'; // Melón
+          break;
+        case 'Básquet':
+          bgColor = 'ECD6B9'; // Naranja
+          break;
+        case 'Fútbol':
+          bgColor = 'C2E296'; // Verde
+          break;
+        default:
+          bgColor = 'FFFFFFFF'; // Blanco (por si no coincide con ningún taller)
+          break;
+      }
+
+      // Aplicar el color de fondo a cada celda de la fila
+      row.eachCell((cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: bgColor }
+        };
+      });
+    });
+
+    // Generar el archivo Excel y enviarlo como respuesta
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=inscripciones.xlsx');
+    res.send(buffer);
+
+  } catch (error) {
+    console.error('Error al exportar las inscripciones a Excel:', error);
+    return res.status(500).json({ error: 'Error al exportar las inscripciones a Excel' });
+  }
+});
+
+
 
 
 

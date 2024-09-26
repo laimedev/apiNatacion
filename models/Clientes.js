@@ -104,7 +104,7 @@ const Clientes = {
   exportData: async () => {
     try {
       const connection = await dbConnection();
-      const query = `SELECT codCliente, nombres, primer_apellido, segundo_apellido, genero, tipoDocumento, numDocumento, telefono, email, estado, creacion
+      const query = `SELECT codCliente, nombres, primer_apellido, segundo_apellido, genero, tipoDocumento, numDocumento, telefono, email, estado, tipo, creacion
                      FROM Clientes`;
       const [rows] = await connection.query(query);
       connection.release();

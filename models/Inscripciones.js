@@ -108,7 +108,7 @@ const Inscripciones = {
           c.telefono,
           c.email AS emailCliente,
           c.numDocumento,
-          c.tipo AS tipoCliente -- Añadimos el campo tipo
+          c.tipo AS tipoCliente
         FROM 
           Inscripciones i
         LEFT JOIN 
@@ -118,70 +118,71 @@ const Inscripciones = {
         LEFT JOIN 
           Talleres t ON i.codTalleres = t.codTalleres
         WHERE 1=1`;
-
-      // Filtrar por codTalleres (específico de un taller) desde la tabla `Talleres`
+  
+      // Filtro por codTalleres (específico de un taller) desde la tabla `Talleres`
       if (codTalleres) {
-        query += ` AND t.codTalleres = ?`; // Cambiado para filtrar en la tabla Talleres
+        query += ` AND t.codTalleres = ?`;
       }
-
-      // Búsqueda por nombres o apellidos del cliente
+  
+      // Búsqueda por codInscripcion, venta_id, apellidos, documento, email o teléfono
       if (searchTerm) {
-        query += ` AND (t.titulo LIKE '%${searchTerm}%' OR i.codInscripcion LIKE '%${searchTerm}%')`;
-
-        // query += ` AND (c.nombres LIKE '%${search}%' 
-        //             OR c.primer_apellido LIKE '%${search}%' 
-        //             OR c.segundo_apellido LIKE '%${search}%' 
-        //             OR c.numDocumento LIKE '%${search}%')%
-        //             OR t.titulo LIKE '%${search}%')`;
+        query += ` AND (
+          i.codInscripcion LIKE '%${searchTerm}%' OR
+          c.primer_apellido LIKE '%${searchTerm}%' OR
+          c.segundo_apellido LIKE '%${searchTerm}%' OR
+          c.numDocumento LIKE '%${searchTerm}%' OR
+          c.telefono LIKE '%${searchTerm}%'
+        )`;
       }
-
+  
       // Filtro por fechas de inscripción
       if (startDate && endDate) {
         query += ` AND i.fechaInscripcion BETWEEN '${startDate}' AND '${endDate}'`;
       }
-
+  
       // Ordenar por fecha de inscripción descendente
       query += ' ORDER BY i.fechaInscripcion DESC';
-
+  
       // Paginación
       query += ` LIMIT ${limit} OFFSET ${offset}`;
-
+  
       const [rows] = await connection.query(query, [codTalleres]);
-
+  
       // Contar el total de registros
       let totalCountQuery = `
         SELECT COUNT(*) AS total FROM Inscripciones i
         LEFT JOIN Clientes c ON i.codCliente = c.codCliente
         LEFT JOIN Talleres t ON i.codTalleres = t.codTalleres
         WHERE 1=1`;
-
+  
       if (codTalleres) {
-        totalCountQuery += ` AND t.codTalleres = ?`; // Filtrar por codTalleres en el conteo total
+        totalCountQuery += ` AND t.codTalleres = ?`;
       }
-
+  
       if (searchTerm) {
-          totalCountQuery += ` AND (t.titulo LIKE '%${searchTerm}%' OR i.codInscripcion LIKE '%${searchTerm}%')`;
-
-        // totalCountQuery += ` AND (c.nombres LIKE '%${searchTerm}%' 
-        //                      OR c.primer_apellido LIKE '%${searchTerm}%' 
-        //                      OR c.segundo_apellido LIKE '%${searchTerm}%' 
-        //                      OR c.numDocumento LIKE '%${searchTerm}%')`;
+        totalCountQuery += ` AND (
+            i.codInscripcion LIKE '%${searchTerm}%' OR
+          c.primer_apellido LIKE '%${searchTerm}%' OR
+          c.segundo_apellido LIKE '%${searchTerm}%' OR
+          c.numDocumento LIKE '%${searchTerm}%' OR
+          c.telefono LIKE '%${searchTerm}%'
+        )`;
       }
-
+  
       if (startDate && endDate) {
         totalCountQuery += ` AND i.fechaInscripcion BETWEEN '${startDate}' AND '${endDate}'`;
       }
-
+  
       const [totalCountRows] = await connection.query(totalCountQuery, [codTalleres]);
       const total = totalCountRows[0].total;
-
+  
       connection.release();
       return { inscripciones: rows, total };
     } catch (error) {
       throw new Error('Error al obtener inscripciones: ' + error.message);
     }
   },
-
+  
 
       // Función para eliminar una inscripción y sus pagos asociados
       deleteById: async (codInscripcion) => {
@@ -228,7 +229,58 @@ const Inscripciones = {
     } catch (error) {
       throw new Error('Error al actualizar clasesCompleta: ' + error.message);
     }
+  },
+
+  // Modelo para exportar inscripciones con detalles a un archivo Excel
+exportInscripciones: async () => {
+  try {
+    const connection = await dbConnection();
+    // Consulta para obtener los datos detallados de las inscripciones
+    const query = `
+      SELECT 
+        i.codInscripcion,
+        i.clasesCompletas,
+        i.codTalleres,
+        t.titulo AS nombreTaller,
+        i.dias,
+        i.horario,
+        i.fechaInscripcion,
+        i.costoTarifa,
+        i.codAlumno,
+        i.codCliente,
+        i.codHorario,
+        i.tiempo,
+        i.clases,
+        i.email AS emailInscripcion,
+        p.fechaPago,
+        p.metodoPago,
+        p.importePago,
+        p.venta_id,
+        c.nombres,
+        c.primer_apellido,
+        c.segundo_apellido,
+        c.telefono,
+        c.email AS emailCliente,
+        c.numDocumento,
+        c.tipo AS tipoCliente
+      FROM 
+        Inscripciones i
+      LEFT JOIN 
+        Pagos p ON i.codInscripcion = p.codInscripcion
+      LEFT JOIN 
+        Clientes c ON i.codCliente = c.codCliente
+      LEFT JOIN 
+        Talleres t ON i.codTalleres = t.codTalleres
+      WHERE 
+        t.estado = 'ACTIVO'`; // Filtrar solo inscripciones de talleres activos
+
+    const [rows] = await connection.query(query);
+    connection.release();
+    return rows;
+  } catch (error) {
+    throw new Error('Error al exportar inscripciones: ' + error);
   }
+}
   
 
   
