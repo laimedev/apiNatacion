@@ -72,6 +72,7 @@ const Horarios = {
           h.vacantes,
           h.codInstructor,
           h.codTalleres,
+          h.estado,
           t.titulo AS nombreTaller -- Aquí se incluye el título del taller
         FROM 
           Horarios h
@@ -81,7 +82,7 @@ const Horarios = {
 
       // Filtro de búsqueda por días, codTalleres o codInstructor
       if (search) {
-        query += ` AND (h.dias LIKE '%${search}%' OR h.codTalleres LIKE '%${search}%' OR h.codInstructor LIKE '%${search}%')`;
+        query += ` AND h.codTalleres LIKE '%${search}%'`;
       }
 
       // Filtro por estado
@@ -208,7 +209,44 @@ const Horarios = {
     } catch (error) {
       throw new Error(error);
     }
+  },
+
+
+
+  // Modelo de Horarios
+updateVacantes: async (codHorario) => {
+  try {
+    const connection = await dbConnection();
+    // Disminuir el número de vacantes en 1 para el codHorario dado
+    const query = 'UPDATE Horarios SET vacantes = vacantes - 1 WHERE codHorario = ? AND vacantes > 0';
+    const [result] = await connection.query(query, [codHorario]);
+    connection.release();
+    return result.affectedRows; // Retorna el número de filas afectadas
+  } catch (error) {
+    throw new Error('Error al actualizar vacantes: ' + error);
   }
+},
+
+
+
+// Obtener la cantidad de vacantes de un horario
+getVacantes: async (codHorario) => {
+  try {
+    const connection = await dbConnection();
+    const query = 'SELECT vacantes FROM Horarios WHERE codHorario = ?';
+    const [rows] = await connection.query(query, [codHorario]);
+    connection.release();
+    if (rows.length === 0) {
+      return null; // No se encontró el horario
+    }
+    return rows[0].vacantes; // Retorna la cantidad de vacantes
+  } catch (error) {
+    throw new Error('Error al obtener vacantes: ' + error);
+  }
+},
+
+
+
 };
 
 module.exports = Horarios;

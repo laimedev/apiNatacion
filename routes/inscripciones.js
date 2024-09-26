@@ -3,11 +3,27 @@ const router = express.Router();
 const moment = require('moment');
 const Inscripciones = require('../models/Inscripciones');
 const Pagos = require('../models/Pagos');
+const Horarios = require('../models/Horarios');
 
+// Crear una nueva inscripción y su respectivo pago
 // Crear una nueva inscripción y su respectivo pago
 router.post('/create', async (req, res) => {
   try {
-    const { costoTarifa, codAlumno, codTalleres,codCliente, codHorario, importePago, venta_id, tiempo, clases, email, dias, horario } = req.body;
+    const { costoTarifa, codAlumno, codTalleres, codCliente, codHorario, importePago, venta_id, tiempo, clases, email, dias, horario } = req.body;
+
+    // Verificar la cantidad de vacantes disponibles
+    const vacantesDisponibles = await Horarios.getVacantes(codHorario);
+    
+    // Si no hay vacantes disponibles, retornar error
+    if (vacantesDisponibles === 0) {
+      return res.status(400).json({ success: false, message: 'No hay vacantes disponibles para este horario' });
+    }
+    
+    // Disminuir 1 vacante en el horario seleccionado
+    const updatedVacantes = await Horarios.updateVacantes(codHorario);
+    if (updatedVacantes === 0) {
+      return res.status(400).json({ success: false, message: 'No se pudo reducir vacantes. Puede que no haya vacantes disponibles.' });
+    }
 
     // Insertar la inscripción en la tabla Inscripciones
     const inscripcionData = {
@@ -44,6 +60,7 @@ router.post('/create', async (req, res) => {
     return res.status(500).json({ success: false, message: 'Error al realizar la inscripción y pago', error });
   }
 });
+
 
 
 
