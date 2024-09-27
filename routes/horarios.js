@@ -184,120 +184,100 @@ router.delete('/delete/:codHorario', async (req, res) => {
   });
 
 
+
+  router.post('/export-excel', async (req, res) => {
+    try {
+      const data = await Horarios.exportData();
   
-// Exportar horarios a Excel
-// Router para exportar inscripciones a un archivo Excel
-router.post('/export-inscripciones', async (req, res) => {
-  try {
-    // Obtener datos de inscripciones desde el modelo
-    const data = await Inscripciones.exportInscripciones();
-
-    // Crear un nuevo libro de Excel
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Inscripciones');
-
-    // Encabezados de las columnas
-    worksheet.columns = [
-      { header: 'ID Inscripción', key: 'codInscripcion', width: 15 },
-      { header: 'Nombre Taller', key: 'nombreTaller', width: 20 },
-      { header: 'Días', key: 'dias', width: 15 },
-      { header: 'Horario', key: 'horario', width: 30 }, // Mostrar solo el primer horario si es un array
-      { header: 'Fecha Inscripción', key: 'fechaInscripcion', width: 20 },
-      { header: 'Costo Tarifa', key: 'costoTarifa', width: 15 },
-      { header: 'Clases Completas', key: 'clasesCompletas', width: 15 },
-      { header: 'Tiempo', key: 'tiempo', width: 15 },
-      { header: 'Clases', key: 'clases', width: 10 },
-      { header: 'Email Inscripción', key: 'emailInscripcion', width: 30 },
-      { header: 'Fecha Pago', key: 'fechaPago', width: 20 },
-      { header: 'Método Pago', key: 'metodoPago', width: 20 },
-      { header: 'Importe Pago', key: 'importePago', width: 15 },
-      { header: 'Venta ID', key: 'venta_id', width: 15 },
-      { header: 'Nombre Cliente', key: 'nombres', width: 20 },
-      { header: 'Primer Apellido Cliente', key: 'primer_apellido', width: 20 },
-      { header: 'Segundo Apellido Cliente', key: 'segundo_apellido', width: 20 },
-      { header: 'Teléfono', key: 'telefono', width: 15 },
-      { header: 'Email Cliente', key: 'emailCliente', width: 30 },
-      { header: 'Documento', key: 'numDocumento', width: 15 },
-      { header: 'Tipo Cliente', key: 'tipoCliente', width: 20 }
-    ];
-
-    // Añadir estilo al encabezado
-    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    worksheet.getRow(1).eachCell((cell) => {
-      cell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: '1872A1' } // Azul para la cabecera
-      };
-    });
-
-    // Añadir los datos al archivo Excel y aplicar estilos según el título del taller
-    data.forEach((inscripcion) => {
-      const row = worksheet.addRow({
-        codInscripcion: inscripcion.codInscripcion,
-        nombreTaller: inscripcion.nombreTaller,
-        dias: inscripcion.dias,
-        horario: inscripcion.horario.length ? inscripcion.horario[0]?.hora : 'No definido', // Mostrar solo el primer elemento del array "horario"
-        fechaInscripcion: inscripcion.fechaInscripcion,
-        costoTarifa: inscripcion.costoTarifa,
-        clasesCompletas: inscripcion.clasesCompletas,
-        tiempo: inscripcion.tiempo,
-        clases: inscripcion.clases,
-        emailInscripcion: inscripcion.emailInscripcion,
-        fechaPago: inscripcion.fechaPago,
-        metodoPago: inscripcion.metodoPago,
-        importePago: inscripcion.importePago,
-        venta_id: inscripcion.venta_id,
-        nombres: inscripcion.nombres,
-        primer_apellido: inscripcion.primer_apellido,
-        segundo_apellido: inscripcion.segundo_apellido,
-        telefono: inscripcion.telefono,
-        emailCliente: inscripcion.emailCliente,
-        numDocumento: inscripcion.numDocumento,
-        tipoCliente: inscripcion.tipoCliente
-      });
-
-      // Establecer color de fondo según el nombre del taller
-      let bgColor;
-      switch (inscripcion.nombreTaller) {
-        case 'Natación':
-          bgColor = 'B9D6EC'; // Celeste
-          break;
-        case 'Voley':
-          bgColor = 'E0CAF0'; // Melón
-          break;
-        case 'Básquet':
-          bgColor = 'ECD6B9'; // Naranja
-          break;
-        case 'Fútbol':
-          bgColor = 'C2E296'; // Verde
-          break;
-        default:
-          bgColor = 'FFFFFFFF'; // Blanco (por si no coincide con ningún taller)
-          break;
-      }
-
-      // Aplicar el color de fondo a cada celda de la fila
-      row.eachCell((cell) => {
+      // Crear un nuevo libro de Excel
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Horarios');
+  
+      // Establecer encabezados y formato de las columnas
+      worksheet.columns = [
+        { header: 'ID', key: 'codHorario', width: 10 },
+        { header: 'Taller', key: 'nombreTaller', width: 20 },
+        { header: 'Días', key: 'dias', width: 30 },
+        { header: 'Horario', key: 'horario', width: 30 }, // Añadir la columna de horario
+        { header: 'Precio', key: 'precio', width: 15 },
+        { header: 'Precio Surcano', key: 'precioSurcano', width: 20 }, // Añadir la columna de precioSurcano
+        { header: 'Sesiones', key: 'sesiones', width: 10 },
+        { header: 'Vacantes', key: 'vacantes', width: 10 },
+        { header: 'Instructor', key: 'nombreInstructor', width: 30 },
+        { header: 'Estado', key: 'estado', width: 15 },
+        { header: 'Fecha de Creación', key: 'creacion', width: 20 }
+      ];
+  
+      // Añadir estilo al encabezado
+      worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      worksheet.getRow(1).eachCell((cell) => {
         cell.fill = {
           type: 'pattern',
           pattern: 'solid',
-          fgColor: { argb: bgColor }
+          fgColor: { argb: '1872A1' } // Azul para la cabecera
         };
       });
-    });
+  
+      // Añadir los datos al archivo Excel y aplicar estilos según el título del taller
+      data.forEach((horario) => {
+        const row = worksheet.addRow({
+          codHorario: horario.codHorario,
+          nombreTaller: horario.nombreTaller,
+          dias: horario.dias,
+          horario: horario.horario, // Mostrar solo el primer elemento del array "horario"
+          precio: horario.precio,
+          precioSurcano: horario.precioSurcano, // Añadir precioSurcano
+          sesiones: horario.sesiones,
+          vacantes: horario.vacantes,
+          nombreInstructor: horario.nombreInstructor,
+          estado: horario.estado,
+          creacion: horario.creacion
+        });
+  
+        // Establecer color de fondo según el nombre del taller
+        let bgColor;
+        switch (horario.nombreTaller) {
+          case 'Natación':
+            bgColor = 'B9D6EC'; // Celeste
+            break;
+          case 'Voley':
+            bgColor = 'E0CAF0'; // Melón
+            break;
+          case 'Básquet':
+            bgColor = 'ECD6B9'; // Naranja
+            break;
+          case 'Fútbol':
+            bgColor = 'C2E296'; // Verde
+            break;
+          default:
+            bgColor = 'FFFFFFFF'; // Blanco (por si no coincide con ningún taller)
+            break;
+        }
+  
+        // Aplicar el color de fondo a cada celda de la fila
+        row.eachCell((cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: bgColor }
+          };
+        });
+      });
+  
+      // Generar el archivo Excel y enviarlo como respuesta
+      const buffer = await workbook.xlsx.writeBuffer();
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=horarios.xlsx');
+      res.send(buffer);
+  
+    } catch (error) {
+      console.error('Error al exportar los horarios a Excel:', error);
+      return res.status(500).json({ error: 'Error al exportar los horarios a Excel' });
+    }
+  });
+  
 
-    // Generar el archivo Excel y enviarlo como respuesta
-    const buffer = await workbook.xlsx.writeBuffer();
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=inscripciones.xlsx');
-    res.send(buffer);
-
-  } catch (error) {
-    console.error('Error al exportar las inscripciones a Excel:', error);
-    return res.status(500).json({ error: 'Error al exportar las inscripciones a Excel' });
-  }
-});
+  
 
 
 

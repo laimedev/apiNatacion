@@ -11,7 +11,7 @@ const ExcelJS = require('exceljs');
 // Crear una nueva inscripción y su respectivo pago
 router.post('/create', async (req, res) => {
   try {
-    const { costoTarifa, codAlumno, codTalleres, codCliente, codHorario, importePago, venta_id, tiempo, clases, email, dias, horario } = req.body;
+    const { costoTarifa, codAlumno, codTalleres, codCliente, codHorario, metodoPago, importePago, venta_id, tiempo, clases, email, dias, horario } = req.body;
 
     // Verificar la cantidad de vacantes disponibles
     const vacantesDisponibles = await Horarios.getVacantes(codHorario);
@@ -48,7 +48,7 @@ router.post('/create', async (req, res) => {
     // Insertar el pago en la tabla Pagos
     const pagoData = {
       fechaPago: moment().format('YYYY-MM-DD HH:mm:ss'), // Fecha actual
-      metodoPago: 'PASARELA IZIPAY', // Método de pago
+      metodoPago, // Método de pago
       importePago,
       venta_id,
       codInscripcion
@@ -182,9 +182,7 @@ router.post('/export-inscripciones', async (req, res) => {
       { header: 'Método Pago', key: 'metodoPago', width: 20 },
       { header: 'Importe Pago', key: 'importePago', width: 15 },
       { header: 'Venta ID', key: 'venta_id', width: 15 },
-      { header: 'Nombre Cliente', key: 'nombres', width: 20 },
-      { header: 'Apellido Cliente', key: 'primer_apellido', width: 20 },
-      { header: 'Apellido Cliente', key: 'segundo_apellido', width: 20 },
+      { header: 'Nombre Completo Cliente', key: 'nombreCompleto', width: 30 },
       { header: 'Teléfono', key: 'telefono', width: 15 },
       { header: 'Email Cliente', key: 'emailCliente', width: 30 },
       { header: 'Documento', key: 'numDocumento', width: 15 },
@@ -192,15 +190,22 @@ router.post('/export-inscripciones', async (req, res) => {
     ];
 
     // Añadir estilos a la cabecera
-    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: '1872A1' } // Azul para la cabecera
+      };
+    });
 
-    // Añadir los datos al archivo Excel
+    // Añadir los datos al archivo Excel y aplicar estilos según el nombre del taller
     data.forEach((inscripcion) => {
-      worksheet.addRow({
+      const row = worksheet.addRow({
         codInscripcion: inscripcion.codInscripcion,
         nombreTaller: inscripcion.nombreTaller,
         dias: inscripcion.dias,
-        horario: inscripcion.horario[0]?.hora || 'No definido', // Mostrar el primer horario si es un array
+        horario: inscripcion.horario,
         fechaInscripcion: inscripcion.fechaInscripcion,
         costoTarifa: inscripcion.costoTarifa,
         clasesCompletas: inscripcion.clasesCompletas,
@@ -211,14 +216,46 @@ router.post('/export-inscripciones', async (req, res) => {
         metodoPago: inscripcion.metodoPago,
         importePago: inscripcion.importePago,
         venta_id: inscripcion.venta_id,
-        nombres: inscripcion.nombres,
-        primer_apellido: inscripcion.primer_apellido,
-        segundo_apellido: inscripcion.segundo_apellido,
+        nombreCompleto: `${inscripcion.nombres} ${inscripcion.primer_apellido} ${inscripcion.segundo_apellido}`,
         telefono: inscripcion.telefono,
         emailCliente: inscripcion.emailCliente,
         numDocumento: inscripcion.numDocumento,
         tipoCliente: inscripcion.tipoCliente
       });
+
+      // Aplicar color de fondo a las filas según la categoría del taller
+      let bgColor;
+      switch (inscripcion.nombreTaller) {
+        case 'Natación':
+          bgColor = 'B9D6EC'; // Celeste para Natación
+          break;
+        case 'Voley':
+          bgColor = 'E0CAF0'; // Melón para Voley
+          break;
+        case 'Básquet':
+          bgColor = 'ECD6B9'; // Naranja para Básquet
+          break;
+        case 'Fútbol':
+          bgColor = 'C2E296'; // Verde para Fútbol
+          break;
+        default:
+          bgColor = 'FFFFFFFF'; // Blanco (por si no coincide con ningún taller)
+          break;
+      }
+
+      // Aplicar el color de fondo a cada celda de la fila
+      row.eachCell((cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: bgColor }
+        };
+      });
+
+      // Si el importe de pago es menor que el costo de la tarifa, poner el texto en rojo
+      if (parseFloat(inscripcion.importePago) < parseFloat(inscripcion.costoTarifa)) {
+        row.getCell('importePago').font = { color: { argb: 'FF0000' } }; // Rojo para importePago menor que costoTarifa
+      }
     });
 
     // Generar el archivo Excel y enviarlo como respuesta
@@ -226,6 +263,7 @@ router.post('/export-inscripciones', async (req, res) => {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 'attachment; filename=inscripciones.xlsx');
     res.send(buffer);
+
   } catch (error) {
     console.error('Error al exportar las inscripciones a Excel:', error);
     return res.status(500).json({ error: 'Error al exportar las inscripciones a Excel' });
