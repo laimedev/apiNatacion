@@ -368,11 +368,12 @@ const Horarios = {
   },
 
 
-
-  getByTallerId: async (codTalleres) => {
+  getByTallerId: async (codTalleres, dias, turno) => {
     try {
       const connection = await dbConnection();
-      const query = `
+  
+      // Start building the query
+      let query = `
         SELECT 
           h.codHorario,
           h.codTalleres,
@@ -380,6 +381,8 @@ const Horarios = {
           h.horario,
           h.tiempo,
           h.precio,
+          h.dias,
+          h.turno,
           h.edad,
           h.turno,
           h.precioSurcano,
@@ -394,11 +397,27 @@ const Horarios = {
         WHERE 
           h.codTalleres = ?
           AND h.estado = 'ACTIVO'
-          AND t.estado = 'ACTIVO'`;
-      
-      const [rows] = await connection.query(query, [codTalleres]);
+          AND t.estado = 'ACTIVO'
+      `;
+  
+      // Parameters array for prepared statement
+      const params = [codTalleres];
+  
+      // Apply the 'dias' filter if provided
+      if (dias) {
+        query += ` AND h.dias = ?`;
+        params.push(dias);
+      }
+  
+      // Apply the 'turno' filter if provided
+      if (turno) {
+        query += ` AND h.turno = ?`;
+        params.push(turno);
+      }
+  
+      const [rows] = await connection.query(query, params);
       connection.release();
-
+  
       // Parsear el campo "horario" a JSON para cada fila si es necesario
       const horarios = rows.map(row => {
         if (row.horario) {
@@ -406,12 +425,13 @@ const Horarios = {
         }
         return row;
       });
-
+  
       return horarios;
     } catch (error) {
       throw new Error('Error al obtener horarios: ' + error);
     }
   },
+  
 
   // Eliminar un horario
   deleteById: async (codHorario) => {

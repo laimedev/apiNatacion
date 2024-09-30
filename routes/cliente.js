@@ -67,13 +67,13 @@ router.post('/register', [
       email,
       password: hashedPassword,
       foto: foto || null,  // Si no se proporciona una foto, se deja como null
-      estado: 'INACTIVO',
+      estado: 'ACTIVO',
       creacion: new Date().toISOString()
     };
     await Clientes.create(formData);
     const client = await Clientes.findOne({ email });
     // Generar token para verificación
-    const token = jwt.sign({ codCliente: client.codCliente, nombres: client.nombres, email }, process.env.JWT_SEC, { expiresIn: '24h' });
+    const token = jwt.sign({ codCliente: client.codCliente, nombres: client.nombres, email }, process.env.JWT_SEC, { expiresIn: '824h' });
     // Enviar correo de verificación
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',

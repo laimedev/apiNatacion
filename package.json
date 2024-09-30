@@ -27,6 +27,7 @@
     "ip-range-check": "^0.2.0",
     "jsonwebtoken": "^9.0.0",
     "moment-timezone": "^0.5.45",
+    "mssql": "^11.0.1",
     "mysql": "^2.18.1",
     "mysql2": "^3.3.3",
     "nodemailer": "^6.9.2",
