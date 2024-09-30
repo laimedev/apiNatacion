@@ -7,7 +7,7 @@ const { check, validationResult } = require('express-validator');
 // Crear un nuevo horario
 router.post('/create', async (req, res) => {
   try {
-    const { codTalleres, dias, horario, tiempo, precio, precioSurcano, sesiones, vacantes, codInstructor, estado } = req.body;
+    const { codTalleres, dias, horario, tiempo, edad, turno, precio, precioSurcano, sesiones, vacantes, codInstructor, estado } = req.body;
 
     // Construir el objeto con los datos para el horario
     const horarioData = {
@@ -15,6 +15,8 @@ router.post('/create', async (req, res) => {
       dias,
       horario, // Aquí el horario será procesado en el modelo según se pase vacío o con un texto plano
       tiempo,
+      edad,
+      turno,
       precio,
       precioSurcano,
       sesiones,
@@ -199,6 +201,8 @@ router.delete('/delete/:codHorario', async (req, res) => {
         { header: 'Taller', key: 'nombreTaller', width: 20 },
         { header: 'Días', key: 'dias', width: 30 },
         { header: 'Horario', key: 'horario', width: 30 }, // Añadir la columna de horario
+        { header: 'Edad', key: 'edad', width: 30 },
+        { header: 'Turno', key: 'turno', width: 30 },
         { header: 'Precio', key: 'precio', width: 15 },
         { header: 'Precio Surcano', key: 'precioSurcano', width: 20 }, // Añadir la columna de precioSurcano
         { header: 'Sesiones', key: 'sesiones', width: 10 },
@@ -225,6 +229,8 @@ router.delete('/delete/:codHorario', async (req, res) => {
           nombreTaller: horario.nombreTaller,
           dias: horario.dias,
           horario: horario.horario, // Mostrar solo el primer elemento del array "horario"
+          edad: horario.edad,
+          turno: horario.turno,
           precio: horario.precio,
           precioSurcano: horario.precioSurcano, // Añadir precioSurcano
           sesiones: horario.sesiones,
