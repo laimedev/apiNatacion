@@ -197,12 +197,12 @@ router.get('/listar-cliente/:id', verifyToken, async (req, res) => {
         registro.codUsuario,
         registro.costoTarifa,
         cliente.primer_apellido,
-        cliente.segundo_apellido,
-        cliente.telefono,
-        cliente.numDocumento
+        Clientes.segundo_apellido,
+        Clientes.telefono,
+        Clientes.numDocumento
       FROM
         registro
-        JOIN cliente ON registro.codCliente = cliente.codCliente
+        JOIN Clientes ON registro.codCliente = Clientes.codCliente
         JOIN localidad ON registro.codLocalidad = localidad.codLocalidad
       WHERE
         registro.codCliente = ?
