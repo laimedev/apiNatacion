@@ -20,14 +20,14 @@ router.get('/listar/', async (req, res) => {
         registro.estado AS estadoRegistro,
         registro.comentario,
         registro.duracion,
-        cliente.nombres AS nomCliente,
+        Clientes.nombres AS nomCliente,
         registro.codCliente,
         localidad.codLocalidad,
         localidad.nomLocalidad,
         registro.codUsuario
       FROM
         registro
-        JOIN cliente ON registro.codCliente = cliente.codCliente
+        JOIN Clientes ON registro.codCliente = Clientes.codCliente
         JOIN localidad ON registro.codLocalidad = localidad.codLocalidad`;
 
     let params = [];
@@ -44,7 +44,7 @@ router.get('/listar/', async (req, res) => {
       start: `${value.fechRegistro} ${value.horainicio}`,
       end: `${value.fechRegistro} ${value.horafinal}`,
       //title: `${value.estadoRegistro} - ${value.nomCliente}`,
-      backgroundColor: value.estadoRegistro === 'SIN CONFIRMAR' ? '#F86569' : '#F86569',
+      backgroundColor: value.estadoRegistro === 'SIN CONFIRMAR' ? '#79C2C3' : '#79C2C3',
       textColor: '#fff',
       extendedProps: {
         codRegistro: value.codRegistro,
@@ -87,7 +87,7 @@ router.post('/guardar', verifyToken, async (req, res) => {
       if (existingCampaigns.length > 0) {
         // Si hay una campaña que comienza en la misma hora y localidad, devolver una respuesta indicando que no se puede registrar la reserva
        // res.json({ ok: false, message: 'Ya hay una campaña que comienza en la misma hora y localidad.' });
-        res.status(400).json({ error: 'Ya hay una campaña que comienza en la misma hora y localidad.' });
+        res.status(400).json({ error: 'Ya hay una reserva que comienza en la misma hora y localidad.' });
       } else {
         // Verificar si el cliente tiene 2 o más registros en el mismo día
         const [existingRecords] = await connection.query(
@@ -231,28 +231,28 @@ router.get('/listar-cliente/:id', verifyToken, async (req, res) => {
 router.post('/precio', verifyToken, async (req, res) => {
   try {
     const { codCliente, codLocalidad, fechRegistro, horainicio, horafinal } = req.body;
-    const clienteQuery = 'SELECT * FROM cliente WHERE codCliente = ?';
+    const clienteQuery = 'SELECT * FROM Clientes WHERE codCliente = ?';
     const precioQueries = {
       CLIENTE: {
         '06:00:00-18:00:00': 'SELECT precioDia FROM localidad WHERE codLocalidad = ?',
         '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
       },
-      MAYOR: {
-        '06:00:00-18:00:00': 'SELECT precioAdultosMayor FROM localidad WHERE codLocalidad = ?',
+      VECINOSURCANO: {
+        '06:00:00-18:00:00': 'SELECT precioDiaSurcano FROM localidad WHERE codLocalidad = ?',
         '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
       },
-      MENOR: {
-        '06:00:00-18:00:00': 'SELECT precioMenores FROM localidad WHERE codLocalidad = ?',
-        '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
-      },
-      VECINO_SI: {
-        '06:00:00-18:00:00': 'SELECT precioVecinosSI FROM localidad WHERE codLocalidad = ?',
-        '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
-      },
-      VECINO_VSP: {
-        '06:00:00-18:00:00': 'SELECT precioVecinosVSP FROM localidad WHERE codLocalidad = ?',
-        '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
-      }
+      // MENOR: {
+      //   '06:00:00-18:00:00': 'SELECT precioMenores FROM localidad WHERE codLocalidad = ?',
+      //   '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
+      // },
+      // VECINO_SI: {
+      //   '06:00:00-18:00:00': 'SELECT precioVecinosSI FROM localidad WHERE codLocalidad = ?',
+      //   '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
+      // },
+      // VECINO_VSP: {
+      //   '06:00:00-18:00:00': 'SELECT precioVecinosVSP FROM localidad WHERE codLocalidad = ?',
+      //   '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
+      // }
     };
 
     const connection = await dbConnection();
@@ -430,7 +430,7 @@ router.post('/validar-fecha-reserva', async (req, res) => {
 
     if (existingCampaigns.length > 0) {
       // Si hay una campaña que cumple con los criterios, devolver una respuesta indicando que no se puede registrar la reserva
-      res.status(400).json({ error: 'Ya hay una campaña que se superpone en el tiempo asignado.' });
+      res.status(400).json({ error: 'Ya hay una reserva que se superpone en el tiempo asignado.' });
     } else {
       // Si no hay campañas que cumplan con los criterios, la reserva es válida
       res.json({ ok: true });
@@ -455,9 +455,9 @@ router.post('/registrar-pago', async (req, res) => {
 //
     //res.json({ ok: true, message: 'Registro de pago exitoso' });
 
-    let [getPago] = await connection.query("select * from pagos where codRegistro = ? ",[input.codRegistro])
+    let [getPago] = await connection.query("select * from Pagos where codRegistro = ? ",[input.codRegistro])
     if(getPago.length === 0){
-        let [updatePago] = await connection.query('INSERT INTO pagos (fechaPago, metodoPago, importePago, codRegistro, codCaja) VALUES (?, ?, ?, ?, ?)', [input.fechaPago, "PASARELA DE PAGO", input.importePago, input.codRegistro, 8 ]);
+        let [updatePago] = await connection.query('INSERT INTO Pagos (fechaPago, metodoPago, importePago, codRegistro, codCaja) VALUES (?, ?, ?, ?, ?)', [input.fechaPago, "PASARELA DE PAGO", input.importePago, input.codRegistro, 8 ]);
         if (updatePago.affectedRows === 0) {
           console.error('No se creo el pago del registro', input.codRegistro)
           res.json({ ok: false, message: `No se creo el pago del registro ${input.codRegistro}` });
@@ -480,28 +480,28 @@ router.post('/registrar-pago', async (req, res) => {
 router.post('/cal-price-time',verifyToken, async (req, res) => {
   try {
     const { codCliente, codLocalidad, fechRegistro, horainicio, horafinal  } = req.body;
-    const clienteQuery = 'SELECT * FROM cliente WHERE codCliente = ?';
+    const clienteQuery = 'SELECT * FROM Clientes WHERE codCliente = ?';
     const precioQueries = {
       CLIENTE: {
         '06:00:00-18:00:00': 'SELECT precioDia FROM localidad WHERE codLocalidad = ?',
         '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
       },
-      MAYOR: {
-        '06:00:00-18:00:00': 'SELECT precioAdultosMayor FROM localidad WHERE codLocalidad = ?',
-        '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
-      },
-      MENOR: {
-        '06:00:00-18:00:00': 'SELECT precioMenores FROM localidad WHERE codLocalidad = ?',
-        '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
-      },
-      VECINO_SI: {
-        '06:00:00-18:00:00': 'SELECT precioVecinosSI FROM localidad WHERE codLocalidad = ?',
-        '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
-      },
-      VECINO_VSP: {
-        '06:00:00-18:00:00': 'SELECT precioVecinosVSP FROM localidad WHERE codLocalidad = ?',
-        '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
+      VECINOSURCANO: {
+        '06:00:00-18:00:00': 'SELECT precioDiaSurcano FROM localidad WHERE codLocalidad = ?',
+        '18:00:00-22:00:00': 'SELECT precioNocheSurcano FROM localidad WHERE codLocalidad = ?'
       }
+      // MENOR: {
+      //   '06:00:00-18:00:00': 'SELECT precioMenores FROM localidad WHERE codLocalidad = ?',
+      //   '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
+      // },
+      // VECINO_SI: {
+      //   '06:00:00-18:00:00': 'SELECT precioVecinosSI FROM localidad WHERE codLocalidad = ?',
+      //   '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
+      // },
+      // VECINO_VSP: {
+      //   '06:00:00-18:00:00': 'SELECT precioVecinosVSP FROM localidad WHERE codLocalidad = ?',
+      //   '18:00:00-22:00:00': 'SELECT precioNoche FROM localidad WHERE codLocalidad = ?'
+      // }
     };
 
     const connection = await dbConnection();
@@ -532,7 +532,7 @@ router.post('/cal-price-time',verifyToken, async (req, res) => {
       return;
     }
 
-    const precio = precioResults[0].precioDia || precioResults[0].precioNoche || precioResults[0].precioAdultosMayor || precioResults[0].precioMenores || precioResults[0].precioVecinosSI || precioResults[0].precioVecinosVSP;
+    const precio = precioResults[0].precioDia || precioResults[0].precioNoche || precioResults[0].precioDiaSurcano || precioResults[0].precioNocheSurcano;
     //res.json({ precio });
 
     connection.release();
