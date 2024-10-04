@@ -10,10 +10,14 @@ const registerRouter = require("./routes/register")
 const authRouter = require("./routes/auth")
 const listadoRegistro = require("./routes/listadoRegistro")
 const registroCliente = require("./routes/registroCliente")
+const registroClienteAdmin = require("./routes/registroClienteAdmin")
 const localidadRouter = require("./routes/localidad")
 const clienteRouter = require("./routes/cliente")
 const clientesTea = require("./routes/teatro/clienteTeaRouter")
 const SolicitudTea = require("./routes/teatro/solicitudTeaRouter")
+
+const localidadesRouter = require("./routes/localidadRouter")
+const reporteRouter = require("./routes/reporteRouter")
 
 
 const Contacto = require("./routes/contactos")
@@ -62,7 +66,14 @@ app.use("/api/register",registerRouter)
 app.use("/api/auth",authRouter)
 app.use("/api/listado-Registro", listadoRegistro)
 app.use("/api/registro-cliente", registroCliente)
+app.use("/api/registro-cliente-admin", registroClienteAdmin)
+
 app.use("/api/localidad", localidadRouter)
+
+app.use("/api/localidades", localidadesRouter)
+app.use("/api/reporte",reporteRouter)
+
+
 app.use("/api/cliente",clienteRouter)
 app.use("/api/forgot-password",forgotPassword)
 app.use("/api/ipn",ipn)
