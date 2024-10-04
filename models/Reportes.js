@@ -63,10 +63,10 @@ const Reportes = {
         CONCAT(registro.fechRegistro, ' ', registro.horainicio ) AS fechaInicio,
         CONCAT(registro.fechRegistro, ' ', registro.horafinal ) AS fechaFinal,
         localidad.nomLocalidad AS nomLocalidad,
-        CONCAT(cliente.nombres, ' ', cliente.primer_apellido, ' ', cliente.segundo_apellido , ' | ' , cliente.numDocumento, ' | ', cliente.tipo ) AS nombreCompleto
+        CONCAT(Clientes.nombres, ' ', Clientes.primer_apellido, ' ', Clientes.segundo_apellido , ' | ' , Clientes.numDocumento, ' | ', Clientes.tipo ) AS nombreCompleto
         FROM registro
         JOIN localidad ON registro.codLocalidad = localidad.codLocalidad
-        JOIN cliente ON registro.codCliente = cliente.codCliente
+        JOIN Clientes ON registro.codCliente = Clientes.codCliente
         WHERE registro.codRegistro = ?
       `;
       const [rows] = await connection.query(query, [codRegistro]);
