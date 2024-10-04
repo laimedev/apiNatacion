@@ -86,11 +86,11 @@ const Horarios = {
   },
 
   // Listar horarios con filtros de paginación, búsqueda, estado, y fechas
-  getHorariosNatacion: async (page = 1, limit = 10, search = '', status = '', startDate = '', endDate = '') => {
+  getHorariosNatacion: async (page = 1, limit = 10, search = '', status = '', startDate = '', endDate = '', dias = '', turno = '') => {
     try {
       const connection = await dbConnection();
       const offset = (page - 1) * limit;
-
+  
       // Consulta SQL con JOIN entre Horarios y Talleres para obtener el nombre del taller
       let query = `
         SELECT 
@@ -113,31 +113,39 @@ const Horarios = {
         LEFT JOIN 
           Talleres t ON h.codTalleres = t.codTalleres
         WHERE 1=1 AND h.codTalleres = '1'`;
-
-      // Filtro de búsqueda por días, codTalleres o codInstructor
+  
+      // Filtro de búsqueda por estado
       if (search) {
         query += ` AND h.estado LIKE '${search}'`;
-        // query += ` AND h.estado LIKE '%${search}%'`;
       }
-
-      // Filtro por estado
+  
       if (status) {
         query += ` AND h.estado = '${status}'`;
       }
-
+  
       // Filtro por rango de fechas (creación)
       if (startDate && endDate) {
         query += ` AND h.creacion BETWEEN '${startDate}' AND '${endDate}'`;
       }
-
+  
+      // Filtro por dias
+      if (dias) {
+        query += ` AND h.dias LIKE '%${dias}%'`;
+      }
+  
+      // Filtro por turno
+      if (turno) {
+        query += ` AND h.turno LIKE '%${turno}%'`;
+      }
+  
       // Ordenar por fecha de creación descendente
       query += ' ORDER BY h.creacion DESC';
-
+  
       // Paginación
       query += ` LIMIT ${limit} OFFSET ${offset}`;
-
+  
       const [rows] = await connection.query(query);
-
+  
       // Convertir el campo "horario" de string a JSON array para cada fila
       const horarios = rows.map(row => {
         if (row.horario) {
@@ -149,16 +157,16 @@ const Horarios = {
         }
         return row;
       });
-
+  
       // Contar el total de registros (para la paginación)
       let totalQuery = `
         SELECT COUNT(*) AS total
         FROM Horarios h
         LEFT JOIN Talleres t ON h.codTalleres = t.codTalleres
         WHERE 1=1 AND h.codTalleres = '1'`;
-
+  
       if (search) {
-        totalQuery += ` AND (h.dias LIKE '%${search}%' OR h.codTalleres LIKE '%${search}%' OR h.codInstructor LIKE '%${search}%')`;
+        totalQuery += ` AND (h.estado LIKE '${search}')`;
       }
       if (status) {
         totalQuery += ` AND h.estado = '${status}'`;
@@ -166,17 +174,24 @@ const Horarios = {
       if (startDate && endDate) {
         totalQuery += ` AND h.creacion BETWEEN '${startDate}' AND '${endDate}'`;
       }
-
+      if (dias) {
+        totalQuery += ` AND h.dias LIKE '%${dias}%'`;
+      }
+      if (turno) {
+        totalQuery += ` AND h.turno LIKE '%${turno}%'`;
+      }
+  
       const [countRows] = await connection.query(totalQuery);
       const total = countRows[0].total;
-
+  
       connection.release();
-
+  
       return { horarios, total };
     } catch (error) {
       throw new Error('Error al obtener horarios: ' + error.message);
     }
   },
+  
 
 
 

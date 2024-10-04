@@ -114,14 +114,17 @@ router.get('/listNatacion', async (req, res) => {
     const status = req.query.status || '';
     const startDate = req.query.startDate || '';
     const endDate = req.query.endDate || '';
+    const dias = req.query.dias || '';
+    const turno = req.query.turno || '';
 
-    const { horarios, total } = await Horarios.getHorariosNatacion(page, limit, searchTerm, status, startDate, endDate);
+    const { horarios, total } = await Horarios.getHorariosNatacion(page, limit, searchTerm, status, startDate, endDate, dias, turno);
     res.status(200).json({ data: horarios, total });
   } catch (error) {
     console.error('Error al listar los horarios:', error);
     res.status(500).json({ error: 'Error al listar los horarios' });
   }
 });
+
 
 
 
