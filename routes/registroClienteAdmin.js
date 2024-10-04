@@ -58,7 +58,7 @@ router.get('/listar/', async (req, res) => {
       //title: `${value.estadoRegistro} - ${value.nomCliente}`,
       // title: `${value.estadoRegistro} - ${value.nomCliente} ${value.primer_apellido} ${value.segundo_apellido} || ${value.tipo}  || S/ ${value.costoTarifa} soles  ||  Nº Ticket: ${value.codRegistro} ||  ID Pago: ${value.venta_id} `,
       title: `${value.estadoRegistro} - ${value.nomCliente} ${value.primer_apellido} ${value.segundo_apellido} || ${value.tipo} || S/ ${value.costoTarifa} soles || Nº Ticket: ${value.codRegistro}${value.venta_id !== null ? ` || ID Pago: ${value.venta_id}` : ''}`,
-      backgroundColor: value.estadoRegistro === 'SIN CONFIRMAR' ? '#c9101e' : '#155c6e',
+      backgroundColor: value.estadoRegistro === 'SIN CONFIRMAR' ? '#D64954' : '#79C2C3',
       textColor: '#fff',
       extendedProps: {
         codRegistro: value.codRegistro,
