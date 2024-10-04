@@ -117,13 +117,8 @@ router.post('/guardar',  async (req, res) => {
           [input.ddlClientes, input.txtFecha]
         );
 
-        const { recordCount } = existingRecords[0];
 
-        if (recordCount >= 2) {
-          // Si el cliente ya tiene 2 o más registros en el mismo día, devolver una respuesta indicando que no se puede registrar más
-          //res.json({ ok: false, message: 'El cliente ya tiene 2 o más registros en el mismo día.' });
-          res.status(400).json({ error: 'El cliente ya tiene 2 o más registros en el mismo día.' });
-        } else {
+       
           // Si no hay campañas que cumplan con los criterios y el cliente no tiene 2 o más registros en el mismo día, insertar la reserva
           const registro = {
             codUsuario: 1, // Aquí puedes cambiarlo para obtener el código del usuario autenticado usando JWT
@@ -146,7 +141,6 @@ router.post('/guardar',  async (req, res) => {
           const [results] = await connection.query('INSERT INTO registro SET ?', registro); // Ejecuta la inserción utilizando la conexión
           const insertId = results.insertId;
           res.json({ ok: true , codRegistro:insertId});
-        }
       }
     } else {
       res.status(400).json({ error: 'no pasa la validacion de fecha' });
