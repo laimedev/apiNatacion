@@ -48,4 +48,90 @@ router.delete('/delete/:codAlumno', async (req, res) => {
   }
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+router.get('/listInscripciones', async (req, res) => {
+// const getAlumnosWithDetails = async (req, res) => {
+  try {
+    const data = await Alumnos.getAllWithDetails();
+
+    // Estructurar los datos en un formato jerárquico
+    const result = [];
+    const alumnosMap = new Map();
+
+    data.forEach((row) => {
+      // Verificar si el alumno ya está en el mapa
+      if (!alumnosMap.has(row.codAlumno)) {
+        alumnosMap.set(row.codAlumno, {
+          codAlumno: row.codAlumno,
+          codCliente: row.codCliente,
+          nombres: row.alumnoNombres,
+          apellidos: row.alumnoApellidos,
+          genero: row.genero,
+          condicion: row.condicion,
+          fecha_nacimiento: row.fecha_nacimiento,
+          codInscripcion: row.codInscripcion,
+          inscripcion: row.codInscripcion
+            ? {
+                fechaInscripcion: row.fechaInscripcion,
+                costoTarifa: row.costoTarifa,
+                estado: row.estado,
+                tiempo: row.tiempo,
+                dias: row.dias,
+                horario: row.horario,
+                pagos: []
+              }
+            : null,
+          cliente: {
+            nombres: row.clienteNombres,
+            apellidos: row.clienteApellido,
+            email: row.clienteEmail,
+            telefono: row.clienteTelefono
+          }
+        });
+      }
+
+      const alumno = alumnosMap.get(row.codAlumno);
+
+      // Agregar pago si existe
+      if (row.codPago) {
+        alumno.inscripcion.pagos.push({
+          codPago: row.codPago,
+          fechaPago: row.fechaPago,
+          metodoPago: row.metodoPago,
+          importePago: row.importePago,
+          venta_id: row.venta_id
+        });
+      }
+    });
+
+    // Convertir el mapa en un array
+    alumnosMap.forEach((value) => result.push(value));
+
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    console.error('Error al obtener los datos:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error al obtener los datos',
+      error
+    });
+  }
+});
+
 module.exports = router;

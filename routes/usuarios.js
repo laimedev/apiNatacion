@@ -275,13 +275,11 @@ router.post('/edit/:codUsuario', [
   try {
     const codUsuario = req.params.codUsuario;
     const { nombres, primer_apellido, segundo_apellido, tipo, tipoDocumento, numDocumento, telefono, email, password } = req.body;
-
     // Obtener el usuario actual
     const currentUser = await Usuarios.findById(codUsuario);
     if (!currentUser) {
       return res.status(404).json({ error: 'Usuario no encontrado.' });
     }
-
     // Crear un objeto formData con los campos a actualizar
     let formData = {
       nombres,
