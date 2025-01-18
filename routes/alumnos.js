@@ -134,4 +134,71 @@ router.get('/listInscripciones', async (req, res) => {
   }
 });
 
+
+
+router.get('/inscripcion/:codInscripcion', async (req, res) => {
+    try {
+      const { codInscripcion } = req.params;
+  
+      // Obtener datos usando el modelo
+      const data = await Alumnos.getByCodInscripcion(codInscripcion);
+  
+      if (data.length === 0) {
+        return res.status(404).json({ success: false, message: 'No se encontró el registro con el codInscripcion proporcionado.' });
+      }
+  
+      // Estructurar los datos
+      const alumno = {
+        codAlumno: data[0].codAlumno,
+        codCliente: data[0].codCliente,
+        nombres: data[0].alumnoNombres,
+        apellidos: data[0].alumnoApellidos,
+        genero: data[0].genero,
+        condicion: data[0].condicion,
+        fecha_nacimiento: data[0].fecha_nacimiento,
+        codInscripcion: data[0].codInscripcion,
+        inscripcion: {
+          fechaInscripcion: data[0].fechaInscripcion,
+          costoTarifa: data[0].costoTarifa,
+          estado: data[0].estado,
+          tiempo: data[0].tiempo,
+          dias: data[0].dias,
+          horario: data[0].horario,
+          pagos: data
+            .filter((row) => row.codPago) // Solo incluir pagos válidos
+            .map((row) => ({
+              codPago: row.codPago,
+              fechaPago: row.fechaPago,
+              metodoPago: row.metodoPago,
+              importePago: row.importePago,
+              venta_id: row.venta_id
+            }))
+        },
+        cliente: {
+          nombres: data[0].clienteNombres,
+          apellidos: data[0].clienteApellido,
+          email: data[0].clienteEmail,
+          telefono: data[0].clienteTelefono
+        }
+      };
+  
+      return res.status(200).json({ success: true, data: alumno });
+    } catch (error) {
+      console.error('Error al obtener el registro por codInscripcion:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error al obtener los datos',
+        error
+      });
+    }
+  });
+
+
+
+
+
+
+
+
+
 module.exports = router;
