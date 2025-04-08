@@ -143,13 +143,17 @@ const Clientes = {
 
 
   updatePassword: async (codCliente, newPassword) => {
-    const connection = await dbConnection();
-    const query = 'UPDATE Clientes SET password = ? WHERE codCliente = ?';
-    await connection.query(query, [newPassword, codCliente]);
-    await connection.end();
+    try {
+      const connection = await dbConnection();
+      const query = 'UPDATE Clientes SET password = ? WHERE codCliente = ?';
+      const result = await connection.query(query, [newPassword, codCliente]);
+      connection.release();
+      return result.affectedRows;
+    } catch (error) {
+      throw new Error(error);
+    }
   },
   
-
 
 
   getClients: async (page = 1, limit = 10, search = '', status = '', startDate = '', endDate = '') => {

@@ -113,6 +113,27 @@ router.post('/register', [
 });
 
 
+
+// Ruta para actualizar contraseña del cliente
+router.post('/updatePassword/:codCliente', async (req, res) => {
+  const codCliente = req.params.codCliente;
+  const { password } = req.body;
+  if (!password) {
+    return res.status(400).json({ error: 'La nueva contraseña es obligatoria' });
+  }
+  try {
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    await Clientes.updatePassword(codCliente, hashedPassword);
+    return res.status(200).json({ success: 'Contraseña actualizada correctamente' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Error al actualizar la contraseña' });
+  }
+});
+
+
+
 // Activar cuenta de cliente
 router.get('/activate-user', async (req, res) => {
   const { token } = req.query;
@@ -136,23 +157,7 @@ router.get('/activate-user', async (req, res) => {
 
 
 
-// Ruta para actualizar contraseña del cliente
-router.post('/updatePassword/:codCliente', async (req, res) => {
-  const codCliente = req.params.codCliente;
-  const { password } = req.body;
-  if (!password) {
-    return res.status(400).json({ error: 'La nueva contraseña es obligatoria' });
-  }
-  try {
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    await Clientes.updatePassword(codCliente, hashedPassword);
-    return res.status(200).json({ success: 'Contraseña actualizada correctamente' });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Error al actualizar la contraseña' });
-  }
-});
+
 
 
 
