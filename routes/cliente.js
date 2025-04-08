@@ -137,7 +137,7 @@ router.get('/activate-user', async (req, res) => {
 
 
 // Ruta para actualizar contraseña del cliente
-router.put('/updatePassword/:codCliente', async (req, res) => {
+router.post('/updatePassword/:codCliente', async (req, res) => {
   const codCliente = req.params.codCliente;
   const { password } = req.body;
   if (!password) {
