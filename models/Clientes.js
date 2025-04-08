@@ -144,7 +144,7 @@ const Clientes = {
 
   updatePassword: async (codCliente, newPassword) => {
     const connection = await dbConnection();
-    const query = 'UPDATE clientes SET password = ? WHERE codCliente = ?';
+    const query = 'UPDATE Clientes SET password = ? WHERE codCliente = ?';
     await connection.query(query, [newPassword, codCliente]);
     await connection.end();
   },
